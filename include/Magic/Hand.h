@@ -28,6 +28,12 @@ public:
 
     // Отображение
     void showHand() const;
+    
+    // Очистить руку
+    void clear();
+    
+    // Удалить половину карт случайным образом
+    void removeHalfRandomly();
 
 private:
     std::vector<std::unique_ptr<SpellCard>> spells;

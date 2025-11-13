@@ -6,6 +6,7 @@
 class GameAction;
 class Board;
 class Hand;
+class Player;
 
 class InputHandler {
 public:
@@ -23,7 +24,10 @@ public:
     // === МЕНЮ ===
 
     // Главное меню опций
-    static std::unique_ptr<GameAction> handleOptionsMenu(Board* board, Hand* hand);
+    static std::unique_ptr<GameAction> handleOptionsMenu(Board* board, Hand* hand, Player* player);
+
+    // Меню улучшений
+    static std::unique_ptr<GameAction> handleUpgradeMenu(Player* player, Hand* hand);
 
     // Подтверждение выхода
     static bool confirmExit();

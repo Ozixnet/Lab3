@@ -19,6 +19,9 @@ public:
     
     // Сброс цвета
     static void resetTextColor();
+    
+    // Установить позицию курсора (x, y) - координаты начинаются с (0, 0)
+    static void setCursorPosition(int x, int y);
 
     // Константы для цветов
     static const int COLOR_BLACK;
