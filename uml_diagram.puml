@@ -1,0 +1,460 @@
+@startuml Lab2_UML_Class_Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+
+' ============================================
+' CORE GAME CONTROL
+' ============================================
+class GameControl {
+  - countMove: int
+  - isRunning: bool
+  - quitToMenu: bool
+  - playerTurnComplete: bool
+  - player: unique_ptr<Player>
+  - board: unique_ptr<Board>
+  - spellHand: unique_ptr<Hand>
+  + GameControl()
+  + ~GameControl()
+  + gameStart(): void
+  + getCountMove(): int
+  - initGame(int): void
+  - cleanup(): void
+  - processInput(char): void
+  - updateGame(): void
+  - render(): void
+  - playerTurn(unique_ptr<GameAction>): void
+  - enemyTurn(): void
+  - isVictory(): bool
+  - isGameOver(): bool
+  - shouldQuitToMenu(): bool
+}
+
+' ============================================
+' BOARD & GRID
+' ============================================
+class Board {
+  - size: int
+  - player: Player&
+  - grid: Grid
+  - entityManager: EntityManager
+  - slowTraps: vector<pair<int,int>>
+  + Board(int, Player&)
+  + displayBoard(): void
+  + addSlowTraps(int): void
+  + getSize(): int
+  + getEntityManager(): EntityManager&
+  + getGrid(): Grid&
+  + updateGridForDisplay(): void
+}
+
+class Grid {
+  - width: int
+  - height: int
+  - cells: vector<vector<CellType>>
+  + Grid(int, int)
+  + Grid(int, CellType)
+  + getWidth(): int
+  + getHeight(): int
+  + setCell(int, int, CellType): void
+  + getCell(int, int): CellType
+  + isValidPosition(int, int): bool
+  + clear(): void
+  + resize(int, int, CellType): void
+}
+
+' ============================================
+' ENTITY MANAGEMENT
+' ============================================
+class EntityManager {
+  - board: Board*
+  - gridSize: int
+  - player: Player*
+  - plCoord: pair<int,int>
+  - enemies: vector<Enemy>
+  - enemyCoords: vector<pair<int,int>>
+  - buildings: vector<EnemyBuilding>
+  - towers: vector<EnemyTower>
+  - allies: vector<Ally>
+  - allyCoords: vector<pair<int,int>>
+  - slowTraps: vector<pair<int,int>>
+  - playerTraps: vector<pair<int,int>>
+  - buffContext: SpellBuffContext
+  - nextEnemyID: int
+  - nextBuildingID: int
+  - nextAllyID: int
+  + EntityManager(Board*, int, Player*)
+  + playerMove(char): int
+  + playerAttack(char): int
+  + playerReduceHealth(int): void
+  + playerGetHealth(): int
+  + addEnemy(int, int, int, int): void
+  + removeEnemy(int): void
+  + moveAllEnemies(): void
+  + addEnemyBuilding(int, int, int): void
+  + addEnemyTower(int, int, int): void
+  + addAlly(int, int, int, int): void
+  + updateAllTowers(): void
+  + checkTowerAttack(int, int): int
+  + getBoard(): Board&
+  + getBuffContext(): SpellBuffContext&
+}
+
+' ============================================
+' ENTITIES
+' ============================================
+class Player {
+  - health: int
+  - damage: int
+  - distance: int
+  - slowed: bool
+  - DoubleDistance: bool
+  + Player(int, int)
+  + GetHealth(): int
+  + GetDamage(): int
+  + GetDistance(): int
+  + IsSlowed(): bool
+  + ReduceHealth(int): void
+  + ToggleDoubleDistance(): void
+  + SetSlowed(bool): void
+  + displayInfo(): void
+}
+
+class Enemy {
+  - id: int
+  - alive: bool
+  - health: int
+  - damage: int
+  + Enemy(int, int, int)
+  + GetHealth(): int
+  + GetDamage(): int
+  + IsAlive(): bool
+  + GetID(): int
+  + ReduceHealth(int): void
+  + displayInfo(): void
+}
+
+class EnemyBuilding {
+  - x: int
+  - y: int
+  - health: int
+  - id: int
+  - spawnInterval: int
+  - currentTimer: int
+  - active: bool
+  + EnemyBuilding(int, int, int, int)
+  + shouldSpawn(): bool
+  + resetTimer(): void
+  + getX(): int
+  + getY(): int
+  + getID(): int
+  + isActive(): bool
+  + takeDamage(int): void
+}
+
+class EnemyTower {
+  - id: int
+  - x: int
+  - y: int
+  - health: int
+  - maxHealth: int
+  - attackRadius: int
+  - attackDamage: int
+  - cooldownMax: int
+  - cooldownCur: int
+  - spell: unique_ptr<SpellCard>
+  + EnemyTower(int, int, int, int, int, int)
+  + getId(): int
+  + getX(): int
+  + getY(): int
+  + getHealth(): int
+  + takeDamage(int): void
+  + isAlive(): bool
+  + tickCooldown(): void
+  + canAttackNow(): bool
+  + isPlayerInRange(int, int): bool
+  + tryAttack(EntityManager&, int, int, int): bool
+}
+
+class Ally {
+  - id: int
+  - alive: bool
+  - health: int
+  - damage: int
+  + Ally(int, int, int)
+  + GetHealth(): int
+  + GetDamage(): int
+  + IsAlive(): bool
+  + GetID(): int
+  + ReduceHealth(int): void
+}
+
+' ============================================
+' GAME ACTIONS
+' ============================================
+abstract class GameAction {
+  + {abstract} execute(Board&, Player&): int
+  + {abstract} ~GameAction()
+}
+
+class AttackAction {
+  - direction: char
+  + AttackAction(char)
+  + execute(Board&, Player&): int
+}
+
+class MoveAction {
+  - direction: char
+  + MoveAction(char)
+  + execute(Board&, Player&): int
+}
+
+class SpellAction {
+  - spell: SpellCard*
+  - entityManager: EntityManager*
+  - hand: Hand*
+  - gridSize: int
+  - spellIndex: int
+  + SpellAction(SpellCard*, EntityManager*, Hand*, int, int)
+  + execute(Board&, Player&): int
+  + getSpellIndex(): int
+}
+
+class ToggleRangeAction {
+  + ToggleRangeAction()
+  + execute(Board&, Player&): int
+}
+
+' ============================================
+' MAGIC SYSTEM
+' ============================================
+class Hand {
+  - spells: vector<unique_ptr<SpellCard>>
+  - maxSize: size_t
+  + Hand(size_t)
+  + addSpell(unique_ptr<SpellCard>): bool
+  + addRandomSpell(): void
+  + removeSpell(size_t): void
+  + getSpell(size_t): SpellCard*
+  + size(): size_t
+  + isFull(): bool
+  + isEmpty(): bool
+  + showHand(): void
+}
+
+abstract class SpellCard {
+  + {abstract} use(EntityManager&, int): bool
+  + {abstract} getName(): const char*
+  + {abstract} ~SpellCard()
+}
+
+class AreaDamage {
+  - damage: int
+  - radius: int
+  + AreaDamage(int, int)
+  + use(EntityManager&, int): bool
+  + getName(): const char*
+  + getDamage(): int
+  + getRadius(): int
+}
+
+class DirectDamage {
+  - damage: int
+  - radius: int
+  - autoAim: bool
+  - targetX: int
+  - targetY: int
+  + DirectDamage(int, int)
+  + DirectDamage(int, int, bool, int, int)
+  + use(EntityManager&, int): bool
+  + getName(): const char*
+  + getDamage(): int
+  + getRadius(): int
+}
+
+class SummonSpell {
+  - baseCount: int
+  - allyHp: int
+  - allyDmg: int
+  + SummonSpell(int, int, int)
+  + use(EntityManager&, int): bool
+  + getName(): const char*
+}
+
+class TrapSpell {
+  - damage: int
+  - radius: int
+  - maxTraps: int
+  - {static} trapsOnField: vector<unique_ptr<Trap>>
+  - {static} trapCount: int
+  + TrapSpell(int, int, int)
+  + use(EntityManager&, int): bool
+  + getName(): const char*
+  + {static} addTrap(int, int, int): void
+  + {static} getTraps(): const vector<unique_ptr<Trap>>&
+  + {static} clearTraps(): void
+  + {static} checkTrapAt(int, int): int
+}
+
+class EnhanceSpell {
+  - potency: int
+  + EnhanceSpell(int)
+  + use(EntityManager&, int): bool
+  + getName(): const char*
+}
+
+class SpellFactory {
+  + {static} createSpell(string&): unique_ptr<SpellCard>
+  + {static} createRandomSpell(): unique_ptr<SpellCard>
+}
+
+class SpellBuffContext {
+  - directDamageRadiusBonus: int
+  - aoeExtraTiles: int
+  - trapDamageBonus: int
+  - summonExtraAllies: int
+  - stackCount: int
+  + addStack(int): void
+  + applyAndConsumeFor<Params>(Params&): void
+  + clear(): void
+  + hasBuffs(): bool
+}
+
+' ============================================
+' TRAPS
+' ============================================
+enum TrapType {
+  SlowTrap
+  PlayerTrap
+}
+
+class Trap {
+  - id: int
+  - x: int
+  - y: int
+  - type: TrapType
+  - damage: int
+  - slowDuration: int
+  - isActive: bool
+  + Trap(int, int, int)
+  + Trap(int, int, int, TrapType)
+  + getId(): int
+  + getX(): int
+  + getY(): int
+  + getDamage(): int
+  + trigger(): int
+  + deactivate(): void
+}
+
+class TrapRegistry {
+  - {static} traps: vector<TrapInstance>
+  + {static} addTrap(int, int, int): bool
+  + {static} triggerAt(int, int): int
+  + {static} isTrapAt(int, int): bool
+  + {static} getAll(): const vector<TrapInstance>&
+  + {static} clear(): void
+}
+
+struct TrapInstance {
+  + x: int
+  + y: int
+  + damage: int
+  + active: bool
+}
+
+' ============================================
+' PARAMETER STRUCTURES
+' ============================================
+struct AoEParams {
+  + areaSize: int
+  + damage: int
+}
+
+struct DirectDamageParams {
+  + radius: int
+  + damage: int
+}
+
+struct TrapParams {
+  + damage: int
+  + radius: int
+}
+
+struct SummonParams {
+  + count: int
+  + allyHp: int
+  + allyDmg: int
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' GameControl relationships
+GameControl *-- Player : contains
+GameControl *-- Board : contains
+GameControl *-- Hand : contains
+GameControl ..> GameAction : uses
+
+' Board relationships
+Board *-- Grid : contains
+Board *-- EntityManager : contains
+Board --> Player : references
+
+' EntityManager relationships
+EntityManager --> Board : uses
+EntityManager --> Player : uses
+EntityManager *-- SpellBuffContext : contains
+EntityManager "1" *-- "many" Enemy : manages
+EntityManager "1" *-- "many" EnemyBuilding : manages
+EntityManager "1" *-- "many" EnemyTower : manages
+EntityManager "1" *-- "many" Ally : manages
+
+' EnemyTower relationships
+EnemyTower --> SpellCard : uses
+EnemyTower --> EntityManager : uses
+
+' GameAction inheritance
+GameAction <|-- AttackAction
+GameAction <|-- MoveAction
+GameAction <|-- SpellAction
+GameAction <|-- ToggleRangeAction
+
+' SpellAction relationships
+SpellAction --> SpellCard : uses
+SpellAction --> EntityManager : uses
+SpellAction --> Hand : uses
+
+' Hand relationships
+Hand "1" *-- "many" SpellCard : contains
+
+' SpellCard inheritance
+SpellCard <|-- AreaDamage
+SpellCard <|-- DirectDamage
+SpellCard <|-- SummonSpell
+SpellCard <|-- TrapSpell
+SpellCard <|-- EnhanceSpell
+
+' SpellCard relationships
+SpellCard --> EntityManager : uses
+
+' TrapSpell relationships
+TrapSpell --> Trap : uses
+
+' SpellFactory relationships
+SpellFactory ..> SpellCard : creates
+
+' SpellBuffContext relationships
+SpellBuffContext ..> DirectDamageParams : applies to
+SpellBuffContext ..> AoEParams : applies to
+SpellBuffContext ..> TrapParams : applies to
+SpellBuffContext ..> SummonParams : applies to
+
+' Trap relationships
+Trap --> TrapType : uses
+
+' TrapRegistry relationships
+TrapRegistry "1" *-- "many" TrapInstance : manages
+
+@enduml
+
