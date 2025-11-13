@@ -736,7 +736,7 @@ int EntityManager::checkTowerAttack(int playerX, int playerY) {
     // Этот метод вызывается в конце хода игрока
     for (auto& tower : towers) {
         if (tower.isAlive()) {
-            tower.tryAttack(*this, gridSize, playerX, playerY);
+            tower.tryAttack(*this, *board, gridSize, playerX, playerY);
         }
     }
     return 0;  // Урон наносится напрямую через spell->use, не возвращаем значение

@@ -1,6 +1,8 @@
 #include "Entity/Enemies/EnemyTower.h"
 #include "Magic/Spells/DirectDamage.h"
+#include "Magic/GameSpellContext.h"
 #include "Entity/EntityManager.h"
+#include "Board/Board.h"
 #include <iostream>
 #include <cmath>
 
@@ -85,7 +87,7 @@ bool EnemyTower::isPlayerInRange(int playerX, int playerY) const {
     return maxDist <= attackRadius;
 }
 
-bool EnemyTower::tryAttack(EntityManager& em, int gridSize, int playerX, int playerY) {
+bool EnemyTower::tryAttack(EntityManager& em, Board& board, int gridSize, int playerX, int playerY) {
     if (cooldownCur > 0) {
         return false;  // На кулдауне, не атакует
     }
@@ -101,8 +103,11 @@ bool EnemyTower::tryAttack(EntityManager& em, int gridSize, int playerX, int pla
     // Создаем новый DirectDamage с координатами игрока
     spell = std::make_unique<DirectDamage>(attackDamage, attackRadius, true, playerX, playerY);
     
-    // Выполнить spell
-    bool used = spell->use(em, gridSize);
+    // Создаем контекст для заклинания башни
+    GameSpellContext context(em, board, gridSize);
+    
+    // Выполнить spell через контекст
+    bool used = spell->use(context);
     
     if (used) {
         cooldownCur = cooldownMax;  // Установить кулдаун после успешной атаки

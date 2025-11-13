@@ -38,7 +38,7 @@ public:
     int getAttackDamage() const { return attackDamage; }
     int getCooldown() const { return cooldownCur; }
 
-    // === СЕТТЕРЫ ===
+    // сеттеры
     void takeDamage(int damage);
     bool isAlive() const { return health > 0; }
 
@@ -54,7 +54,7 @@ public:
     bool isPlayerInRange(int playerX, int playerY) const;
 
     // Попытаться атаковать игрока через spell
-    bool tryAttack(EntityManager& em, int gridSize, int playerX, int playerY);
+    bool tryAttack(EntityManager& em, class Board& board, int gridSize, int playerX, int playerY);
 };
 
 #endif // ENEMY_TOWER_H

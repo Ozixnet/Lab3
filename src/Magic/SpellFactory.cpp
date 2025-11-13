@@ -4,6 +4,7 @@
 #include "Magic/Spells/TrapSpell.h"
 #include "Magic/Spells/SummonSpell.h"
 #include "Magic/Spells/EnhanceSpell.h"
+
 #include <random>
 #include <vector>
 

@@ -1,6 +1,7 @@
 #include "Actions/SpellAction.h"
 #include "Magic/SpellCard.h"
 #include "Magic/Hand.h"
+#include "Magic/GameSpellContext.h"
 #include "Board/Board.h"
 #include "Entity/EntityManager.h"
 #include <iostream>
@@ -14,7 +15,11 @@ int SpellAction::execute(Board& board, Player& player) {
         return 2;  // Действие заблокировано
     }
 
-    bool used = spell->use(*entityManager, gridSize);
+    // Создаем контекст для заклинания
+    GameSpellContext context(*entityManager, board, gridSize);
+    
+    // Используем заклинание через контекст
+    bool used = spell->use(context);
 
     if (used) {
         std::cout << "Заклинание " << spell->getName() << " успешно использовано!\n";

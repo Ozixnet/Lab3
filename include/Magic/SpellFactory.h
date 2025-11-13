@@ -7,14 +7,14 @@
 
 class SpellFactory {
 public:
-    // Создать заклинание по типу
+    // Создать заклинание
     static std::unique_ptr<SpellCard> createSpell(const std::string& spellType);
 
-    // Создать случайное заклинание
+    // случайное заклинание
     static std::unique_ptr<SpellCard> createRandomSpell();
 
 private:
-    SpellFactory() = delete;  // Утилитарный класс, нельзя инстанцировать
+    SpellFactory() = delete;
 };
 
 #endif // SPELL_FACTORY_H

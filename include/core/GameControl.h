@@ -13,7 +13,7 @@ class GameControl {
 public:
     GameControl();
 
-    // === ЯВНЫЙ ДЕСТРУКТОР (ключ!) ===
+    // явный деструктор
     ~GameControl();
 
     // Главный игровой цикл
@@ -37,16 +37,16 @@ private:
     void initGame(int boardSize);
     void cleanup();
 
-    // === ОСНОВНОЙ ЦИКЛ ===
+    // === ОСНОВНОЙ ЦИКЛ
     void processInput(char input);
     void updateGame();
     void render();
 
-    // === ОБРАБОТКА ДЕЙСТВИЙ ===
+    // === ОБРАБОТКА ДЕЙСТВИЙ
     void playerTurn(std::unique_ptr<GameAction> action);
     void enemyTurn();
 
-    // === ПРОВЕРКИ СОСТОЯНИЯ ===
+    // === ПРОВЕРКИ СОСТОЯНИЯ
     bool isVictory() const;
     bool isGameOver() const;
     bool shouldQuitToMenu() const;

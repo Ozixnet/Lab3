@@ -6,34 +6,32 @@
 #include <memory>
 
 class Trap;
-class EntityManager;
 
+/**
+ * @brief Заклинание размещения ловушки
+ * 
+ * Позволяет разместить ловушку на игровом поле,
+ * которая наносит урон врагам при срабатывании.
+ */
 class TrapSpell : public SpellCard {
 private:
     int damage;
     int radius;
-    int maxTraps;  // Максимум ловушек на поле
+    int maxTraps;
 
 public:
     TrapSpell(int dmg = 5, int rad = 5, int maxTrp = 3);
     
-    bool use(EntityManager& entityManager, int gridSize) override;
+    bool use(ISpellContext& context) override;
     const char* getName() const override { return "Trap Spell"; }
     
-    // Добавить ловушку
+    // Статические методы для совместимости (используются TrapRegistry)
     static void addTrap(int x, int y, int damage);
-    
-    // Получить все ловушки
     static const std::vector<std::unique_ptr<Trap>>& getTraps();
-    
-    // Очистить ловушки
     static void clearTraps();
-    
-    // Проверить триггер ловушки и вернуть урон
     static int checkTrapAt(int x, int y);
 
 private:
-    // Статические ловушки на поле
     static std::vector<std::unique_ptr<Trap>> trapsOnField;
     static int trapCount;
 };

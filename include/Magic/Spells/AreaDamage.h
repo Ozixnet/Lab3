@@ -3,6 +3,11 @@
 
 #include "../SpellCard.h"
 
+/**
+ * @brief Заклинание урона по площади
+ * 
+ * Наносит урон всем целям в выбранной квадратной области.
+ */
 class AreaDamage : public SpellCard {
 private:
     int damage;
@@ -11,10 +16,9 @@ private:
 public:
     AreaDamage(int dmg = 2, int rad = 3);
     
-    bool use(EntityManager& entityManager, int gridSize) override;
+    bool use(ISpellContext& context) override;
     const char* getName() const override;
     
-    // Геттеры для параметров
     int getDamage() const { return damage; }
     int getRadius() const { return radius; }
 };

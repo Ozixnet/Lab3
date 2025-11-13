@@ -1,20 +1,21 @@
 #include "Magic/Spells/SummonSpell.h"
-#include "Entity/EntityManager.h"
+#include "Magic/ISpellContext.h"
 #include "Magic/SpellParams.h"
+#include "Magic/SpellBuffContext.h"
 #include <iostream>
 
 SummonSpell::SummonSpell(int baseCount, int allyHp, int allyDmg)
     : baseCount(baseCount), allyHp(allyHp), allyDmg(allyDmg) {}
 
-bool SummonSpell::use(EntityManager& entityManager, int gridSize) {
+bool SummonSpell::use(ISpellContext& context) {
     try {
-        auto [playerX, playerY] = entityManager.getPlayerCoord();
+        auto [playerX, playerY] = context.getPlayerPosition();
         
         // Создаем параметры
         SummonParams params{baseCount, allyHp, allyDmg};
         
         // Применяем баффы
-        entityManager.getBuffContext().applyAndConsumeFor(params);
+        context.getBuffContext().applyAndConsumeFor(params);
         
         std::cout << "\n=== Заклинание Summon Spell ===" << std::endl;
         std::cout << "Призываем " << params.count << " союзников..." << std::endl;
@@ -23,11 +24,14 @@ bool SummonSpell::use(EntityManager& entityManager, int gridSize) {
         
         // Пытаемся призвать params.count союзников
         for (int i = 0; i < params.count; ++i) {
-            auto [freeX, freeY] = entityManager.findFreeAdjacentCell(playerX, playerY);
+            auto [freeX, freeY] = context.findFreeAdjacentCell(playerX, playerY);
             
             if (freeX >= 0 && freeY >= 0) {
-                entityManager.addAlly(freeX, freeY, params.allyHp, params.allyDmg);
-                summonedCount++;
+                if (context.summonAlly(freeX, freeY, params.allyHp, params.allyDmg)) {
+                    summonedCount++;
+                } else {
+                    std::cout << "Не удалось призвать союзника #" << (i + 1) << std::endl;
+                }
             } else {
                 std::cout << "Не удалось найти свободную клетку для союзника #" << (i + 1) << std::endl;
             }
@@ -48,4 +52,3 @@ bool SummonSpell::use(EntityManager& entityManager, int gridSize) {
         return false;
     }
 }
-

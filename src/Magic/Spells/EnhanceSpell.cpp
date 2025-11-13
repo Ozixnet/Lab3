@@ -1,14 +1,15 @@
 #include "Magic/Spells/EnhanceSpell.h"
-#include "Entity/EntityManager.h"
+#include "Magic/ISpellContext.h"
+#include "Magic/SpellBuffContext.h"
 #include <iostream>
 
 EnhanceSpell::EnhanceSpell(int potency) : potency(potency) {}
 
-bool EnhanceSpell::use(EntityManager& entityManager, int gridSize) {
+bool EnhanceSpell::use(ISpellContext& context) {
     try {
         std::cout << "\n=== Заклинание Enhance Spell ===" << std::endl;
         
-        entityManager.getBuffContext().addStack(potency);
+        context.getBuffContext().addStack(potency);
         
         std::cout << "✓ Усиление накоплено! Мощность: " << potency << std::endl;
         std::cout << "Следующее заклинание будет усилено." << std::endl;
@@ -22,4 +23,3 @@ bool EnhanceSpell::use(EntityManager& entityManager, int gridSize) {
         return false;
     }
 }
-

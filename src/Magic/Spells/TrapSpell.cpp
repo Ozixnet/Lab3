@@ -1,40 +1,37 @@
 #include "Magic/Spells/TrapSpell.h"
-#include "Magic/TrapRegistry.h"
+#include "Magic/ISpellContext.h"
 #include "Magic/SpellParams.h"
-#include "Entity/EntityManager.h"
-#include "Board/Board.h"
+#include "Magic/SpellBuffContext.h"
+#include "Board/Trap.h"
 #include <iostream>
+#include <cmath>
 
-// Статические члены класса (для совместимости, но не используются)
+// Статические члены класса (для совместимости)
 std::vector<std::unique_ptr<Trap>> TrapSpell::trapsOnField;
 int TrapSpell::trapCount = 0;
 
 TrapSpell::TrapSpell(int dmg, int rad, int maxTrp)
     : damage(dmg), radius(rad), maxTraps(maxTrp) {}
 
-bool TrapSpell::use(EntityManager& entityManager, int gridSize) {
+bool TrapSpell::use(ISpellContext& context) {
     try {
         // Создаем параметры и применяем баффы
         TrapParams params{damage};
-        entityManager.getBuffContext().applyAndConsumeFor(params);
+        context.getBuffContext().applyAndConsumeFor(params);
         
         int finalDamage = params.damage;
         
         // Получаем координаты игрока
-        auto [playerX, playerY] = entityManager.getPlayerCoord();
+        auto [playerX, playerY] = context.getPlayerPosition();
+        int gridSize = context.getGridSize();
         
         std::cout << "\n=== Заклинание Trap Spell ===" << std::endl;
         std::cout << "Выберите координаты для размещения ловушки (в пределах радиуса " 
                   << radius << "):" << std::endl;
-        std::cout << "Введите координаты X Y (или -1 -1 для отмены): ";
         
-        int targetX, targetY;
-        if (!(std::cin >> targetX >> targetY)) {
-            std::cout << "Ошибка ввода координат!" << std::endl;
-            std::cin.clear();
-            std::cin.ignore(10000, '\n');
-            return false;
-        }
+        auto [targetX, targetY] = context.requestCoordinates(
+            "Введите координаты X Y (или -1 -1 для отмены): "
+        );
         
         if (targetX == -1 && targetY == -1) {
             std::cout << "Размещение ловушки отменено." << std::endl;
@@ -55,31 +52,20 @@ bool TrapSpell::use(EntityManager& entityManager, int gridSize) {
             return false;
         }
         
-        // Проверяем, что клетка пустая
-        Board& board = entityManager.getBoard();
-        Grid& grid = board.getGrid();
-        CellType cell = grid.getCell(targetX, targetY);
-        
-        // Нельзя ставить на занятые клетки: стену, врага, здание, башню
-        if (cell != CellType::Empty && cell != CellType::Player && cell != CellType::SlowTrap) {
+        // Проверяем через контекст, что клетка подходит
+        if (!context.isCellEmpty(targetX, targetY)) {
             std::cout << "Нельзя поставить ловушку на занятую клетку!" << std::endl;
             return false;
         }
         
-        // Проверка ловушки поля (slow trap): нельзя перекрывать
-        if (cell == CellType::SlowTrap) {
-            std::cout << "Нельзя поставить ловушку на ловушку поля!" << std::endl;
-            return false;
-        }
-        
-        // Проверить, что тут ещё нет игровой ловушки
-        if (TrapRegistry::isTrapAt(targetX, targetY)) {
+        // Проверяем, что тут нет ловушки
+        if (context.hasTrapAt(targetX, targetY)) {
             std::cout << "Здесь уже есть ловушка!" << std::endl;
             return false;
         }
         
-        // Размещаем ловушку через TrapRegistry с усиленным уроном
-        if (!TrapRegistry::addTrap(targetX, targetY, finalDamage)) {
+        // Размещаем ловушку через контекст
+        if (!context.placeTrap(targetX, targetY, finalDamage)) {
             std::cout << "Не удалось разместить ловушку!" << std::endl;
             return false;
         }
@@ -96,6 +82,8 @@ bool TrapSpell::use(EntityManager& entityManager, int gridSize) {
         return false;
     }
 }
+
+// Статические методы для совместимости
 void TrapSpell::addTrap(int x, int y, int damage) {
     trapsOnField.push_back(std::make_unique<Trap>(x, y, damage));
     trapCount++;
@@ -119,4 +107,3 @@ int TrapSpell::checkTrapAt(int x, int y) {
     }
     return 0;
 }
-
