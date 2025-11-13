@@ -2,11 +2,11 @@
 #include <iostream>
 
 Player::Player(int h, int d)
-    : health(h), damage(d) {}
+    : health(h), maxHealth(h), damage(d), baseDamage(d) {}
 
 void Player::displayInfo() const {
     std::cout << "=== Player Stats ===" << std::endl;
-    std::cout << "Health: " << health << std::endl;
+    std::cout << "Health: " << health << " / " << maxHealth << std::endl;
     std::cout << "Damage: " << damage << std::endl;
     std::cout << "Distance: " << distance << std::endl;
 

@@ -44,3 +44,11 @@ void ConsoleUtils::resetTextColor() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 }
+
+void ConsoleUtils::setCursorPosition(int x, int y) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord;
+    coord.X = static_cast<SHORT>(x);
+    coord.Y = static_cast<SHORT>(y);
+    SetConsoleCursorPosition(hConsole, coord);
+}

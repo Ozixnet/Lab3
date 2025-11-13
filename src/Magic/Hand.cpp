@@ -2,6 +2,8 @@
 #include "Magic/SpellFactory.h"
 
 #include <iostream>
+#include <algorithm>
+#include <vector>
 
 // Конструктор
 Hand::Hand(size_t maxSize)
@@ -75,5 +77,37 @@ bool Hand::isEmpty() const {
 void Hand::validateIndex(size_t index) const {
     if (index >= spells.size()) {
         throw std::out_of_range("Индекс заклинания выходит за границы!");
+    }
+}
+
+// Очистить руку
+void Hand::clear() {
+    spells.clear();
+}
+
+// Удалить половину карт случайным образом
+void Hand::removeHalfRandomly() {
+    if (spells.empty()) {
+        return;
+    }
+    
+    size_t toRemove = spells.size() / 2;
+    
+    // Создать список индексов
+    std::vector<size_t> indices;
+    for (size_t i = 0; i < spells.size(); ++i) {
+        indices.push_back(i);
+    }
+    
+    // Перемешать индексы
+    std::random_shuffle(indices.begin(), indices.end());
+    
+    // Удалить первые toRemove карт (в обратном порядке, чтобы не сбивать индексы)
+    std::sort(indices.begin(), indices.begin() + toRemove, std::greater<size_t>());
+    
+    for (size_t i = 0; i < toRemove; ++i) {
+        if (indices[i] < spells.size()) {
+            spells.erase(spells.begin() + indices[i]);
+        }
     }
 }

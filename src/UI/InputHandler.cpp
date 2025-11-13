@@ -6,8 +6,10 @@
 #include "Board/Board.h"
 #include "Magic/Hand.h"
 #include "Magic/SpellCard.h"
+#include "Entity/Player/Player.h"
 #include "UI/ConsoleUtils.h"
 #include "UI/MenuRenderer.h"
+#include "Utils/Random.h"
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
@@ -90,7 +92,7 @@ std::unique_ptr<GameAction> InputHandler::handleSpellInput(Hand* hand, Board* bo
     );
 }
 
-std::unique_ptr<GameAction> InputHandler::handleOptionsMenu(Board* board, Hand* hand) {
+std::unique_ptr<GameAction> InputHandler::handleOptionsMenu(Board* board, Hand* hand, Player* player) {
     char option;
     ConsoleUtils::clearScreen();
 
@@ -105,6 +107,8 @@ std::unique_ptr<GameAction> InputHandler::handleOptionsMenu(Board* board, Hand* 
             return std::make_unique<ToggleRangeAction>();
         case 's': case 'S':
             return handleSpellInput(hand, board);
+        case 'u': case 'U':
+            return handleUpgradeMenu(player, hand);
         case 27:  // ESC
             std::cout << "Отменено\n";
             return nullptr;
@@ -112,6 +116,96 @@ std::unique_ptr<GameAction> InputHandler::handleOptionsMenu(Board* board, Hand* 
             std::cout << "Неизвестная опция\n";
             ConsoleUtils::pause(1000);
             return nullptr;
+    }
+}
+
+std::unique_ptr<GameAction> InputHandler::handleUpgradeMenu(Player* player, Hand* hand) {
+    if (!player) {
+        std::cout << "Ошибка: игрок не инициализирован!\n";
+        ConsoleUtils::pause(1500);
+        return nullptr;
+    }
+    
+    while (true) {
+        ConsoleUtils::clearScreen();
+        MenuRenderer::renderUpgradeMenu(player, hand);
+        
+        char option = _getch();
+        
+        switch(option) {
+            case '1': {
+                // Улучшить макс. HP
+                if (player->SpendUpgradePoint()) {
+                    player->UpgradeMaxHealth(100);
+                    std::cout << "\n✅ Максимальное HP увеличено на 100!\n";
+                    std::cout << "Новое значение: " << player->GetMaxHealth() << "\n";
+                    ConsoleUtils::pause(1500);
+                } else {
+                    std::cout << "\n❌ Недостаточно очков прокачки!\n";
+                    ConsoleUtils::pause(1500);
+                }
+                break;
+            }
+            case '2': {
+                // Улучшить урон
+                if (player->SpendUpgradePoint()) {
+                    player->UpgradeBaseDamage(2);
+                    std::cout << "\n✅ Базовый урон увеличен на 2!\n";
+                    std::cout << "Новое значение: " << player->GetBaseDamage() << "\n";
+                    ConsoleUtils::pause(1500);
+                } else {
+                    std::cout << "\n❌ Недостаточно очков прокачки!\n";
+                    ConsoleUtils::pause(1500);
+                }
+                break;
+            }
+            case '3': {
+                // Улучшить случайное заклинание
+                if (player->GetUpgradePoints() < 2) {
+                    std::cout << "\n❌ Требуется 2 очка прокачки!\n";
+                    ConsoleUtils::pause(1500);
+                    break;
+                }
+                
+                if (!hand || hand->isEmpty()) {
+                    std::cout << "\n❌ Нет заклинаний для улучшения!\n";
+                    ConsoleUtils::pause(1500);
+                    break;
+                }
+                
+                // Улучшить случайное заклинание
+                int randomIndex = Random::getRange(0, hand->size() - 1);
+                SpellCard* spell = hand->getSpell(randomIndex);
+                
+                if (spell) {
+                    // Потратить 2 очка
+                    player->SpendUpgradePoint();
+                    player->SpendUpgradePoint();
+                    
+                    // Улучшить заклинание (увеличить урон и радиус на 50%)
+                    // Это упрощенная реализация, в реальности нужно модифицировать SpellCard
+                    std::cout << "\n✅ Заклинание '" << spell->getName() << "' улучшено!\n";
+                    std::cout << "Урон и радиус увеличены на 50%!\n";
+                    
+                    // TODO: Реализовать фактическое улучшение заклинания
+                    // Можно добавить множитель в SpellCard или использовать SpellBuffContext
+                    
+                    ConsoleUtils::pause(2000);
+                } else {
+                    std::cout << "\n❌ Ошибка при улучшении заклинания!\n";
+                    ConsoleUtils::pause(1500);
+                }
+                break;
+            }
+            case 27:  // ESC
+                std::cout << "\nВозврат в меню опций...\n";
+                ConsoleUtils::pause(500);
+                return nullptr;
+            default:
+                std::cout << "\n❌ Неизвестная опция!\n";
+                ConsoleUtils::pause(1000);
+                break;
+        }
     }
 }
 

@@ -28,6 +28,9 @@ public:
 
     // Меню опций
     static void renderOptionsMenu();
+    
+    // Меню прокачки
+    static void renderUpgradeMenu(const Player* player, const Hand* hand);
 
     // === ИТОГОВЫЕ ЭКРАНЫ ===
 

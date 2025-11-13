@@ -2,7 +2,7 @@
 #include <string>
 #include <fstream>
 #include <memory>
-#include "Core/GameExceptions.h"
+#include "core/GameExceptions.h"
 
 // Forward declarations
 class GameControl;
@@ -33,11 +33,8 @@ private:
     static void savePlayer(std::ofstream& file, const Player& player);
     static void loadPlayer(std::ifstream& file, Player& player);
     
-    static void saveBoard(std::ofstream& file, const Board& board);
-    static void loadBoard(std::ifstream& file, Board& board, Player& player);
-    
     static void saveEntityManager(std::ofstream& file, const EntityManager& em);
-    static void loadEntityManager(std::ifstream& file, EntityManager& em, Board& board, Player& player);
+    static void loadEntityManager(std::ifstream& file, EntityManager& em);
     
     static void saveHand(std::ofstream& file, const Hand& hand);
     static void loadHand(std::ifstream& file, Hand& hand);
