@@ -23,7 +23,7 @@ public:
     }
     
     std::string getDescription() const override { 
-        return "Убейте всех врагов! Используйте WASD для движения."; 
+        return "Убейте всех врагов! Используйте WASD";
     }
     
     int getBoardSize() const override { 

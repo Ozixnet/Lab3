@@ -235,24 +235,63 @@ class Hand {
   + addSpell(unique_ptr<SpellCard>): bool
   + addRandomSpell(): void
   + removeSpell(size_t): void
+  + removeHalfRandomly(): void
   + getSpell(size_t): SpellCard*
   + size(): size_t
   + isFull(): bool
   + isEmpty(): bool
   + showHand(): void
+  + clear(): void
 }
 
 abstract class SpellCard {
-  + {abstract} use(EntityManager&, int): bool
+  + {abstract} use(ISpellContext&): bool
   + {abstract} getName(): const char*
   + {abstract} ~SpellCard()
+}
+
+abstract class ISpellContext {
+  + {abstract} getPlayerPosition(): pair<int,int>
+  + {abstract} getGridSize(): int
+  + {abstract} findTargetsInRadius(int, int, int): vector<TargetInfo>
+  + {abstract} isCellEmpty(int, int): bool
+  + {abstract} hasTrapAt(int, int): bool
+  + {abstract} dealDamage(int, int, int): bool
+  + {abstract} dealDamageToTarget(TargetInfo&, int): bool
+  + {abstract} placeTrap(int, int, int): bool
+  + {abstract} summonAlly(int, int, int, int): bool
+  + {abstract} findFreeAdjacentCell(int, int): pair<int,int>
+  + {abstract} getBuffContext(): SpellBuffContext&
+  + {abstract} requestTargetSelection(vector<TargetInfo>&): int
+  + {abstract} requestCoordinates(string&): pair<int,int>
+  + {abstract} ~ISpellContext()
+}
+
+class GameSpellContext {
+  - entityManager: EntityManager&
+  - board: Board&
+  - gridSize: int
+  + GameSpellContext(EntityManager&, Board&, int)
+  + getPlayerPosition(): pair<int,int>
+  + getGridSize(): int
+  + findTargetsInRadius(int, int, int): vector<TargetInfo>
+  + isCellEmpty(int, int): bool
+  + hasTrapAt(int, int): bool
+  + dealDamage(int, int, int): bool
+  + dealDamageToTarget(TargetInfo&, int): bool
+  + placeTrap(int, int, int): bool
+  + summonAlly(int, int, int, int): bool
+  + findFreeAdjacentCell(int, int): pair<int,int>
+  + getBuffContext(): SpellBuffContext&
+  + requestTargetSelection(vector<TargetInfo>&): int
+  + requestCoordinates(string&): pair<int,int>
 }
 
 class AreaDamage {
   - damage: int
   - radius: int
   + AreaDamage(int, int)
-  + use(EntityManager&, int): bool
+  + use(ISpellContext&): bool
   + getName(): const char*
   + getDamage(): int
   + getRadius(): int
@@ -266,7 +305,7 @@ class DirectDamage {
   - targetY: int
   + DirectDamage(int, int)
   + DirectDamage(int, int, bool, int, int)
-  + use(EntityManager&, int): bool
+  + use(ISpellContext&): bool
   + getName(): const char*
   + getDamage(): int
   + getRadius(): int
@@ -277,7 +316,7 @@ class SummonSpell {
   - allyHp: int
   - allyDmg: int
   + SummonSpell(int, int, int)
-  + use(EntityManager&, int): bool
+  + use(ISpellContext&): bool
   + getName(): const char*
 }
 
@@ -285,21 +324,15 @@ class TrapSpell {
   - damage: int
   - radius: int
   - maxTraps: int
-  - {static} trapsOnField: vector<unique_ptr<Trap>>
-  - {static} trapCount: int
   + TrapSpell(int, int, int)
-  + use(EntityManager&, int): bool
+  + use(ISpellContext&): bool
   + getName(): const char*
-  + {static} addTrap(int, int, int): void
-  + {static} getTraps(): const vector<unique_ptr<Trap>>&
-  + {static} clearTraps(): void
-  + {static} checkTrapAt(int, int): int
 }
 
 class EnhanceSpell {
   - potency: int
   + EnhanceSpell(int)
-  + use(EntityManager&, int): bool
+  + use(ISpellContext&): bool
   + getName(): const char*
 }
 
@@ -315,10 +348,14 @@ class SpellBuffContext {
   - summonExtraAllies: int
   - stackCount: int
   + addStack(int): void
-  + applyAndConsumeFor<Params>(Params&): void
+  + applyAndConsumeFor(Params&): void
   + clear(): void
   + hasBuffs(): bool
 }
+
+note right of SpellBuffContext
+  applyAndConsumeFor - Template method: <Params>
+end note
 
 ' ============================================
 ' TRAPS
@@ -386,6 +423,15 @@ struct SummonParams {
   + allyDmg: int
 }
 
+struct TargetInfo {
+  + x: int
+  + y: int
+  + type: Type
+  + index: int
+  + health: int
+  + displayName: string
+}
+
 ' ============================================
 ' RELATIONSHIPS
 ' ============================================
@@ -404,6 +450,7 @@ Board --> Player : references
 ' EntityManager relationships
 EntityManager --> Board : uses
 EntityManager --> Player : uses
+EntityManager ..> TrapRegistry : uses
 EntityManager *-- SpellBuffContext : contains
 EntityManager "1" *-- "many" Enemy : manages
 EntityManager "1" *-- "many" EnemyBuilding : manages
@@ -411,7 +458,8 @@ EntityManager "1" *-- "many" EnemyTower : manages
 EntityManager "1" *-- "many" Ally : manages
 
 ' EnemyTower relationships
-EnemyTower --> SpellCard : uses
+EnemyTower *-- SpellCard : contains
+EnemyTower ..> GameSpellContext : creates
 EnemyTower --> EntityManager : uses
 
 ' GameAction inheritance
@@ -421,9 +469,10 @@ GameAction <|-- SpellAction
 GameAction <|-- ToggleRangeAction
 
 ' SpellAction relationships
-SpellAction --> SpellCard : uses
-SpellAction --> EntityManager : uses
+SpellAction o-- SpellCard : aggregates
+SpellAction ..> GameSpellContext : creates
 SpellAction --> Hand : uses
+SpellAction --> EntityManager : uses
 
 ' Hand relationships
 Hand "1" *-- "many" SpellCard : contains
@@ -436,19 +485,27 @@ SpellCard <|-- TrapSpell
 SpellCard <|-- EnhanceSpell
 
 ' SpellCard relationships
-SpellCard --> EntityManager : uses
+SpellCard --> ISpellContext : uses
+
+' ISpellContext inheritance
+ISpellContext <|-- GameSpellContext
+
+' GameSpellContext relationships
+GameSpellContext --> EntityManager : uses
+GameSpellContext --> Board : uses
+GameSpellContext --> SpellBuffContext : uses
+GameSpellContext ..> TargetInfo : creates
 
 ' TrapSpell relationships
-TrapSpell --> Trap : uses
+TrapSpell ..> TrapRegistry : uses
 
 ' SpellFactory relationships
 SpellFactory ..> SpellCard : creates
-
-' SpellBuffContext relationships
-SpellBuffContext ..> DirectDamageParams : applies to
-SpellBuffContext ..> AoEParams : applies to
-SpellBuffContext ..> TrapParams : applies to
-SpellBuffContext ..> SummonParams : applies to
+SpellFactory ..> DirectDamage : creates
+SpellFactory ..> AreaDamage : creates
+SpellFactory ..> TrapSpell : creates
+SpellFactory ..> SummonSpell : creates
+SpellFactory ..> EnhanceSpell : creates
 
 ' Trap relationships
 Trap --> TrapType : uses
@@ -457,4 +514,3 @@ Trap --> TrapType : uses
 TrapRegistry "1" *-- "many" TrapInstance : manages
 
 @enduml
-
