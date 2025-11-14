@@ -38,7 +38,7 @@ void GameControl::initGame() {
     system("cls");
 
     // Создать игрока и руку заклинаний (один раз за игру!)
-    player = std::make_unique<Player>(5, 5);
+    player = std::make_unique<Player>(1000, 5);
     spellHand = std::make_unique<Hand>(5);
 
     std::cout << "Игрок создан!\n";
@@ -62,7 +62,7 @@ void GameControl::loadLevel(int /* levelIndex */) {
     level->initialize(board->getEntityManager());
     
     // Добавить ловушки на поле (опционально)
-    board->addSlowTraps(3);
+    //board->addSlowTraps(3);
     
     // Сбросить счетчик ходов для нового уровня
     countMove = 1;
@@ -157,7 +157,7 @@ void GameControl::gameStart() {
                         // Проверка на поражение
                         if (isGameOver()) {
                             MenuRenderer::renderGameOver(countMove);
-                            std::cout << "\nНачать заного с 1000 хп? (y/n): ";
+                            std::cout << "\nНачать заново игру или выйти? (y - начать заново, n - выйти): ";
                             char retry;
                             std::cin >> retry;
                             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -168,7 +168,7 @@ void GameControl::gameStart() {
                                 spellHand.reset();  // Удалить старую руку
                                 levelManager.reset();  // Сбросить менеджер уровней
                                 
-                                // Создать нового игрока и руку
+                                // Создать нового игрока и руку (с нормальными параметрами)
                                 player = std::make_unique<Player>(1000, 5);
                                 spellHand = std::make_unique<Hand>(5);
                                 
@@ -183,29 +183,14 @@ void GameControl::gameStart() {
                                     break;
                                 }
                             } else {
-                                // N - Восстановить HP и перезагрузить текущий уровень
-                                if (player) {
-                                    player->RestoreHealth();  // Восстановить HP до максимума
-                                }
-                                
-                                // Перезагрузить текущий уровень
-                                int currentLevelIndex = levelManager.getCurrentLevelIndex();
-                                cleanup();  // Очистить board
-                                
-                                // Перезагрузить уровень
-                                if (levelManager.loadLevel(currentLevelIndex)) {
-                                    loadLevel(currentLevelIndex);
-                                    showLevelStart();
-                                    continue;  // Продолжить с тем же уровнем
-                                } else {
-                                    // Ошибка загрузки уровня, вернуться в меню
-                                    cleanup();
-                                    player.reset();
-                                    spellHand.reset();
-                                    levelManager.reset();
-                                    isRunning = false;
-                                    break;
-                                }
+                                // N - Выйти из игры (вернуться в главное меню)
+                                cleanup();
+                                player.reset();
+                                spellHand.reset();
+                                levelManager.reset();
+                                isRunning = false;
+                                quitToMenu = true;
+                                break;
                             }
                         }
 
@@ -434,9 +419,9 @@ void GameControl::showLevelStart() {
     system("cls");
     std::cout << "\n";
     std::cout << "╔═══════════════════════════════════════╗\n";
-    std::cout << "║       " << level->getName() << "       ║\n";
+    std::cout << "║       " << level->getName() << "      ║\n";
     std::cout << "╠═══════════════════════════════════════╣\n";
-    std::cout << "║  " << level->getDescription() << "  ║\n";
+    std::cout << "║  " << level->getDescription() << "    ║\n";
     std::cout << "╠═══════════════════════════════════════╣\n";
     std::cout << "║  Размер поля: " << level->getBoardSize() << "x" << level->getBoardSize() << "                 ║\n";
     std::cout << "║  Сложность: ";
@@ -446,7 +431,7 @@ void GameControl::showLevelStart() {
     for (int i = level->getDifficulty(); i < 5; ++i) {
         std::cout << "☆";
     }
-    std::cout << "                      ║\n";
+    std::cout << "                                        ║\n";
     std::cout << "╚═══════════════════════════════════════╝\n";
     std::cout << "\nНажмите Enter для начала...\n";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -463,7 +448,7 @@ void GameControl::showLevelComplete() {
     std::cout << "╠═══════════════════════════════════════╣\n";
     std::cout << "║  " << level->getName() << "  ║\n";
     std::cout << "║  Ходов: " << countMove << "                          ║\n";
-    std::cout << "║  HP: " << player->GetHealth() << " / 15                        ║\n";
+    std::cout << "║  HP: " << player->GetHealth() << " / " << player->GetMaxHealth() << "                        ║\n";
     std::cout << "╚═══════════════════════════════════════╝\n";
     
     if (levelManager.hasNextLevel()) {
@@ -479,10 +464,10 @@ void GameControl::showGameComplete() {
     system("cls");
     std::cout << "\n";
     std::cout << "╔═══════════════════════════════════════╗\n";
-    std::cout << "║       ВЫ ПРОШЛИ ВСЮ ИГРУ! 🏆        ║\n";
+    std::cout << "║       ВЫ ПРОШЛИ ВСЮ ИГРУ! 🏆         ║\n";
     std::cout << "╠═══════════════════════════════════════╣\n";
     std::cout << "║  Все уровни пройдены!                ║\n";
-    std::cout << "║  Финальный HP: " << player->GetHealth() << " / 15            ║\n";
+    std::cout << "║  Финальный HP: " << player->GetHealth() << " / " << player->GetMaxHealth() << "            ║\n";
     std::cout << "╚═══════════════════════════════════════╝\n";
     std::cout << "\nСпасибо за игру!\n";
     std::cout << "Нажмите Enter...\n";

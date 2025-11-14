@@ -4,6 +4,8 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <random>
+#include <chrono>
 
 // Конструктор
 Hand::Hand(size_t maxSize)
@@ -14,6 +16,7 @@ Hand::Hand(size_t maxSize)
     addSpell(SpellFactory::createSpell("EnhanceSpell"));
     addSpell(SpellFactory::createSpell("TrapSpell"));
     addSpell(SpellFactory::createSpell("AreaDamage"));
+    addSpell(SpellFactory::createSpell("SummonSpell"));
     // Добавляем случайное заклинание
     //addRandomSpell();
 }
@@ -91,23 +94,39 @@ void Hand::removeHalfRandomly() {
         return;
     }
     
-    size_t toRemove = spells.size() / 2;
+    size_t originalSize = spells.size();
+    size_t toRemove = originalSize / 2;
+    
+    // Если нечего удалять, выйти
+    if (toRemove == 0) {
+        return;
+    }
     
     // Создать список индексов
     std::vector<size_t> indices;
-    for (size_t i = 0; i < spells.size(); ++i) {
+    indices.reserve(originalSize);
+    for (size_t i = 0; i < originalSize; ++i) {
         indices.push_back(i);
     }
     
-    // Перемешать индексы
-    std::random_shuffle(indices.begin(), indices.end());
+    // Перемешать индексы с использованием современного генератора случайных чисел
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 generator(seed);
+    std::shuffle(indices.begin(), indices.end(), generator);
     
-    // Удалить первые toRemove карт (в обратном порядке, чтобы не сбивать индексы)
-    std::sort(indices.begin(), indices.begin() + toRemove, std::greater<size_t>());
-    
+    // Выбрать первые toRemove индексов для удаления
+    std::vector<size_t> toRemoveIndices;
+    toRemoveIndices.reserve(toRemove);
     for (size_t i = 0; i < toRemove; ++i) {
-        if (indices[i] < spells.size()) {
-            spells.erase(spells.begin() + indices[i]);
-        }
+        toRemoveIndices.push_back(indices[i]);
+    }
+    
+    // Отсортировать в обратном порядке, чтобы удалять с конца (не сбивать индексы)
+    std::sort(toRemoveIndices.begin(), toRemoveIndices.end(), std::greater<size_t>());
+    
+    // Удалить выбранные карты (удаляем в обратном порядке, чтобы индексы не сбивались)
+    for (size_t idx : toRemoveIndices) {
+        // При удалении в обратном порядке индексы всегда валидны
+        spells.erase(spells.begin() + idx);
     }
 }
