@@ -32,6 +32,8 @@ add_executable(untitled main.cpp ${SOURCES}
         src/Magic/Spells/TrapSpell.cpp
         include/Magic/Spells/TrapSpell.h
         src/Magic/TrapRegistry.cpp
+        src/Input/ConsoleInputReader.cpp
+        src/Rendering/ConsoleRenderer.cpp
         # Новые файлы
         src/Entity/Allies/Ally.cpp
         src/Magic/SpellBuffContext.cpp
@@ -58,6 +60,7 @@ add_executable(untitled main.cpp ${SOURCES}
         include/core/Levels/Level2_TowerDefense.h
         include/core/Levels/Level3_BuildingAssault.h
         include/core/Levels/Level4_FinalBattle.h
+        src/Events/EventBus.cpp
 )
 
 if(MSVC)

@@ -1,9 +1,11 @@
 #include "Actions/SpellAction.h"
-#include "Magic/SpellCard.h"
-#include "Magic/Hand.h"
-#include "Magic/GameSpellContext.h"
 #include "Board/Board.h"
 #include "Entity/EntityManager.h"
+#include "Events/EventBus.h"
+#include "Events/GameEvent.h"
+#include "Magic/GameSpellContext.h"
+#include "Magic/Hand.h"
+#include "Magic/SpellCard.h"
 #include <iostream>
 
 SpellAction::SpellAction(SpellCard* s, EntityManager* em, Hand* h, int gs, int idx)
@@ -23,6 +25,8 @@ int SpellAction::execute(Board& board, Player& player) {
 
     if (used) {
         std::cout << "Заклинание " << spell->getName() << " успешно использовано!\n";
+        auto [x, y] = entityManager->getPlayerCoord();
+        EventBus::getInstance().publish(SpellCastEvent(spell->getName(), x, y));
 
         // Удаляем заклинание из руки после успешного использования
         if (hand && spellIndex >= 0 && spellIndex < static_cast<int>(hand->size())) {
