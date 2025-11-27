@@ -1,5 +1,4 @@
 #include "core/GameSaveManager.h"
-#include "core/GameControl.h"
 #include "Entity/Player/Player.h"
 #include "Board/Board.h"
 #include "Entity/EntityManager.h"
@@ -17,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <cstdio>
 
 // Магическая сигнатура файла сохранения
 constexpr const char* SAVE_SIGNATURE = "GAME_SAVE_V1";
@@ -40,141 +40,6 @@ bool GameSaveManager::checkHeader(std::ifstream& file) {
     return std::strcmp(signature, SAVE_SIGNATURE) == 0;
 }
 
-void GameSaveManager::saveGame(const GameControl& game, const std::string& filename) {
-    std::ofstream file(filename, std::ios::binary | std::ios::trunc);
-    
-    if (!file.is_open()) {
-        throw SaveException("Cannot open file for writing: " + filename, "saveGame");
-    }
-    
-    try {
-        // Записать заголовок
-        writeHeader(file);
-        
-        // Сохранить countMove
-        writeBinary(file, game.getCountMove());
-        
-        // Сохранить текущий уровень
-        int currentLevelIndex = game.getLevelManager().getCurrentLevelIndex();
-        writeBinary(file, currentLevelIndex);
-        
-        // Сохранить Player
-        const Player* player = game.getPlayer();
-        if (player) {
-            savePlayer(file, *player);
-        } else {
-            throw SaveException("Player is null", "saveGame");
-        }
-        
-        // Сохранить Board и EntityManager
-        const Board* board = game.getBoard();
-        if (board) {
-            // Сохранить размер поля
-            writeBinary(file, board->getSize());
-            // Сохранить EntityManager
-            saveEntityManager(file, board->getEntityManager());
-        } else {
-            throw SaveException("Board is null", "saveGame");
-        }
-        
-        // Сохранить Hand
-        const Hand* hand = game.getHand();
-        if (hand) {
-            saveHand(file, *hand);
-        } else {
-            throw SaveException("Hand is null", "saveGame");
-        }
-        
-        file.close();
-        
-        if (!file.good() && !file.eof()) {
-            throw SaveException("Error occurred while writing file", "saveGame");
-        }
-        
-    } catch (const SaveException&) {
-        file.close();
-        throw;  // Пробросить дальше
-    } catch (const std::exception& e) {
-        file.close();
-        throw SaveException("Unexpected error: " + std::string(e.what()), "saveGame");
-    }
-}
-
-void GameSaveManager::loadGame(GameControl& game, const std::string& filename) {
-    std::ifstream file(filename, std::ios::binary);
-    
-    if (!file.is_open()) {
-        throw FileNotFoundException(filename, "loadGame");
-    }
-    
-    try {
-        // Проверить заголовок
-        if (!checkHeader(file)) {
-            throw InvalidDataException("Invalid file format or corrupted save file", "loadGame");
-        }
-        
-        // Загрузить countMove
-        int countMove;
-        readBinary(file, countMove);
-        game.setCountMove(countMove);
-        
-        // Загрузить текущий уровень
-        int currentLevelIndex;
-        readBinary(file, currentLevelIndex);
-        
-        // Загрузить уровень
-        LevelManager& lm = game.getLevelManager();
-        Level* level = lm.loadLevel(currentLevelIndex);
-        if (!level) {
-            throw InvalidDataException("Invalid level index: " + std::to_string(currentLevelIndex), "loadGame");
-        }
-        
-        // Загрузить Player
-        Player* player = game.getPlayer();
-        if (!player) {
-            // Создать игрока если его нет
-            game.setPlayer(std::make_unique<Player>(1000, 5));
-            player = game.getPlayer();
-        }
-        loadPlayer(file, *player);
-        
-        // Загрузить размер Board и создать Board
-        int boardSize;
-        readBinary(file, boardSize);
-        
-        if (boardSize < 10 || boardSize > 25) {
-            throw InvalidDataException("Invalid board size: " + std::to_string(boardSize), "loadGame");
-        }
-        
-        // Создать Board нужного размера
-        game.setBoard(std::make_unique<Board>(boardSize, *player));
-        Board* board = game.getBoard();
-        
-        // Загрузить EntityManager (координаты игрока загрузятся внутри)
-        loadEntityManager(file, board->getEntityManager());
-        
-        // Загрузить Hand
-        Hand* hand = game.getHand();
-        if (!hand) {
-            game.setHand(std::make_unique<Hand>(5));
-            hand = game.getHand();
-        }
-        loadHand(file, *hand);
-        
-        file.close();
-        
-        if (!file.good() && !file.eof()) {
-            throw LoadException("Error occurred while reading file", "loadGame");
-        }
-        
-    } catch (const LoadException&) {
-        file.close();
-        throw;  // Пробросить дальше
-    } catch (const std::exception& e) {
-        file.close();
-        throw LoadException("Unexpected error: " + std::string(e.what()), "loadGame");
-    }
-}
 
 bool GameSaveManager::saveExists(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);

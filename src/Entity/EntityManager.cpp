@@ -56,6 +56,32 @@ EntityManager& EntityManager::operator=(EntityManager&& other) noexcept {
     return *this;
 }
 
+void EntityManager::beginPlayerAttackRecord() {
+    recordingPlayerAttack = true;
+    lastPlayerAttackInfo = AttackInfo{};
+}
+
+void EntityManager::endPlayerAttackRecord() {
+    recordingPlayerAttack = false;
+}
+
+void EntityManager::recordPlayerAttackHit(const std::string& targetName,
+                                          int x,
+                                          int y,
+                                          int damage,
+                                          bool destroyed) {
+    if (!recordingPlayerAttack) {
+        return;
+    }
+
+    lastPlayerAttackInfo.hit = true;
+    lastPlayerAttackInfo.targetName = targetName;
+    lastPlayerAttackInfo.targetX = x;
+    lastPlayerAttackInfo.targetY = y;
+    lastPlayerAttackInfo.damage = damage;
+    lastPlayerAttackInfo.targetDestroyed = destroyed;
+}
+
 
 // ========================================
 // ИГРОВАЯ ЛОГИКА
@@ -125,6 +151,10 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
                       << " | Было HP: " << oldHealth
                       << " | Осталось HP: " << enemies[enemyIndex].GetHealth() << std::endl;
 
+            const std::string targetName = "Враг #" + std::to_string(enemies[enemyIndex].GetID());
+            bool destroyed = !enemies[enemyIndex].IsAlive();
+            recordPlayerAttackHit(targetName, x, y, damage, destroyed);
+
             if (!enemies[enemyIndex].IsAlive()) {
                 std::cout << "💀 Враг #" << enemies[enemyIndex].GetID() << " повержен!" << std::endl;
                 removeEnemy(enemyIndex);
@@ -148,6 +178,10 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
                       << "! Урон: " << damage
                       << " | Было HP: " << oldHealth
                       << " | Осталось HP: " << buildings[buildingIndex].getHealth() << std::endl;
+
+            const std::string targetName = "Здание #" + std::to_string(buildings[buildingIndex].getID());
+            bool destroyed = buildings[buildingIndex].getHealth() <= 0;
+            recordPlayerAttackHit(targetName, x, y, damage, destroyed);
 
             if (buildings[buildingIndex].getHealth() <= 0) {
                 std::cout << "💥 Здание #" << buildings[buildingIndex].getID() << " разрушено!" << std::endl;
@@ -182,6 +216,10 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
                       << " | Было HP: " << oldHealth
                       << " | Осталось HP: " << buildings[buildingIndex].getHealth() << std::endl;
 
+            const std::string targetName = "Здание #" + std::to_string(buildings[buildingIndex].getID());
+            bool destroyed = buildings[buildingIndex].getHealth() <= 0;
+            recordPlayerAttackHit(targetName, x, y, damage, destroyed);
+
             if (buildings[buildingIndex].getHealth() <= 0) {
                 std::cout << "💥 Здание #" << buildings[buildingIndex].getID() << " разрушено!" << std::endl;
                 removeBuilding(buildingIndex);
@@ -200,6 +238,10 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
                   << "! Урон: " << damage
                   << " | Было HP: " << oldHealth
                   << " | Осталось HP: " << towers[towerIndex].getHealth() << std::endl;
+
+        const std::string targetName = "Башня #" + std::to_string(towers[towerIndex].getId());
+        bool destroyed = !towers[towerIndex].isAlive() || towers[towerIndex].getHealth() <= 0;
+        recordPlayerAttackHit(targetName, x, y, damage, destroyed);
 
         if (!towers[towerIndex].isAlive() || towers[towerIndex].getHealth() <= 0) {
             std::cout << "💥 Башня #" << towers[towerIndex].getId() << " разрушена!" << std::endl;
@@ -304,6 +346,12 @@ int EntityManager::playerMove(char key) {
 }
 
 int EntityManager::playerAttack(char key) {
+    struct PlayerAttackRecorderGuard {
+        EntityManager& manager;
+        explicit PlayerAttackRecorderGuard(EntityManager& m) : manager(m) { manager.beginPlayerAttackRecord(); }
+        ~PlayerAttackRecorderGuard() { manager.endPlayerAttackRecord(); }
+    } recorder(*this);
+
     int distance = player->GetDistance();
     auto [startX, startY] = plCoord;
 

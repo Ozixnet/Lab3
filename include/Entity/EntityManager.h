@@ -1,8 +1,9 @@
 #ifndef ENTITYMANAGER_H
 #define ENTITYMANAGER_H
 
-#include <vector>
+#include <string>
 #include <utility>
+#include <vector>
 #include "Enemies/Enemy.h"
 #include "Enemies/EnemyBuilding.h"
 #include "Enemies/EnemyTower.h"
@@ -17,6 +18,15 @@ class Board;  // Forward declaration
 class EntityManager {
 
 public:
+    struct AttackInfo {
+        bool hit{false};
+        bool targetDestroyed{false};
+        std::string targetName;
+        int targetX{0};
+        int targetY{0};
+        int damage{0};
+    };
+
     EntityManager(Board* boardPtr, int gridSize, Player* playerPtr);
 
     // === КОНСТРУКТОРЫ КОПИРОВАНИЯ (только деклараторы!) ===
@@ -108,6 +118,8 @@ public:
     // Геттер для доступа к SpellBuffContext
     SpellBuffContext& getBuffContext() { return buffContext; }
     const SpellBuffContext& getBuffContext() const { return buffContext; }
+
+    const AttackInfo& getLastPlayerAttackInfo() const { return lastPlayerAttackInfo; }
     
     // === МЕТОДЫ ДЛЯ СОЮЗНИКОВ ===
     void addAlly(int x, int y, int health, int damage);
@@ -146,6 +158,13 @@ private:
     int nextEnemyID{1};
     int nextBuildingID{1};
     int nextAllyID{1};
+
+    AttackInfo lastPlayerAttackInfo;
+    bool recordingPlayerAttack{false};
+
+    void beginPlayerAttackRecord();
+    void endPlayerAttackRecord();
+    void recordPlayerAttackHit(const std::string& targetName, int x, int y, int damage, bool destroyed);
 };
 
 #endif // ENTITYMANAGER_H
