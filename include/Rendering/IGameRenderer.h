@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 class Board;
 class Player;
 class Hand;
@@ -30,6 +32,10 @@ public:
     virtual void clearScreen() = 0;
     virtual void pause(int milliseconds) = 0;
 };
+
+
+
+
 
 
 

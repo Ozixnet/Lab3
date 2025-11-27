@@ -8,6 +8,7 @@
 #include "Entity/Player/Player.h"
 #include "Magic/Hand.h"
 #include "Magic/SpellCard.h"
+#include "Rendering/ConsoleRenderer.h"
 #include "Rendering/IGameRenderer.h"
 #include "UI/ConsoleUtils.h"
 #include "Utils/Random.h"
@@ -16,13 +17,65 @@
 #include <conio.h>
 #include <cctype>
 #include <iostream>
+#include <vector>
 
 ConsoleInputReader::ConsoleInputReader() {
-    keyBindings.loadFromFile("config/keybindings.cfg");
+    std::cout << "\n[DEBUG ConsoleInputReader] Инициализация...\n";
+
+    // Пробуем загрузить конфигурацию из разных возможных путей
+    std::vector<std::string> possiblePaths = {
+        "config/keybindings.cfg",           // Относительно текущей директории
+        "../config/keybindings.cfg",        // Если запускаем из cmake-build-debug
+        "../../config/keybindings.cfg",     // Если запускаем из подпапки
+        "keybindings.cfg"                   // Прямо в текущей директории
+    };
+
+    bool loaded = false;
+    std::string loadedPath;
+    for (const auto& path : possiblePaths) {
+        std::cout << "[DEBUG] Пробую загрузить из: " << path << "\n";
+        loaded = keyBindings.loadFromFile(path);
+        if (loaded) {
+            loadedPath = path;
+            std::cout << "[DEBUG] ✓ Конфигурация успешно загружена из: " << path << "\n";
+            break;
+        }
+    }
+
+    if (loaded) {
+        // Выводим текущие привязки
+        std::cout << "\n";
+        std::cout << "═══════════════════════════════════════\n";
+        std::cout << "✅ КОНФИГУРАЦИЯ ЗАГРУЖЕНА УСПЕШНО!\n";
+        std::cout << "═══════════════════════════════════════\n";
+        keyBindings.printBindings();
+        std::cout << "═══════════════════════════════════════\n\n";
+    } else {
+        std::cerr << "\n";
+        std::cerr << "═══════════════════════════════════════\n";
+        std::cerr << "⚠️ КОНФИГУРАЦИЯ НЕ ЗАГРУЖЕНА!\n";
+        std::cerr << "   Используются дефолтные настройки (WASD)\n";
+        std::cerr << "   Проверьте наличие файла config/keybindings.cfg\n";
+        std::cerr << "═══════════════════════════════════════\n\n";
+    }
 }
 
 void ConsoleInputReader::setRenderer(IGameRenderer* rendererPtr) {
     renderer = rendererPtr;
+    std::cout << "[DEBUG ConsoleInputReader] setRenderer вызван\n";
+
+    // Устанавливаем KeyBindings в ConsoleRenderer для отображения правильных подсказок
+    if (rendererPtr) {
+        ConsoleRenderer* consoleRenderer = dynamic_cast<ConsoleRenderer*>(rendererPtr);
+        if (consoleRenderer) {
+            consoleRenderer->setKeyBindings(&keyBindings);
+            std::cout << "[DEBUG] ✓ KeyBindings установлен в ConsoleRenderer\n";
+        } else {
+            std::cout << "[DEBUG] ✗ rendererPtr не является ConsoleRenderer (возможно GUI режим)\n";
+        }
+    } else {
+        std::cout << "[DEBUG] ✗ rendererPtr == nullptr\n";
+    }
 }
 
 GameCommand ConsoleInputReader::mapInputToCommand(const std::string& input) const {
@@ -54,17 +107,43 @@ std::unique_ptr<GameAction> ConsoleInputReader::parseCommand(
         return nullptr;
     }
 
+    std::cout << "[DEBUG parseCommand] Входной ввод: '" << input << "'\n";
     GameCommand cmd = keyBindings.getCommand(input);
+    std::cout << "[DEBUG parseCommand] Команда из KeyBindings: " << static_cast<int>(cmd) << "\n";
 
     switch (cmd) {
-        case GameCommand::MOVE_UP:
-            return handleMovementInput('w');
-        case GameCommand::MOVE_DOWN:
-            return handleMovementInput('s');
-        case GameCommand::MOVE_LEFT:
-            return handleMovementInput('a');
-        case GameCommand::MOVE_RIGHT:
-            return handleMovementInput('d');
+        case GameCommand::MOVE_UP: {
+            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_UP);
+            if (key.empty() || key == "?") {
+                std::cerr << "Ошибка: клавиша не настроена для MOVE_UP!\n";
+                return nullptr;
+            }
+            return handleMovementInput(key[0]);
+        }
+        case GameCommand::MOVE_DOWN: {
+            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_DOWN);
+            if (key.empty() || key == "?") {
+                std::cerr << "Ошибка: клавиша не настроена для MOVE_DOWN!\n";
+                return nullptr;
+            }
+            return handleMovementInput(key[0]);
+        }
+        case GameCommand::MOVE_LEFT: {
+            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_LEFT);
+            if (key.empty() || key == "?") {
+                std::cerr << "Ошибка: клавиша не настроена для MOVE_LEFT!\n";
+                return nullptr;
+            }
+            return handleMovementInput(key[0]);
+        }
+        case GameCommand::MOVE_RIGHT: {
+            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_RIGHT);
+            if (key.empty() || key == "?") {
+                std::cerr << "Ошибка: клавиша не настроена для MOVE_RIGHT!\n";
+                return nullptr;
+            }
+            return handleMovementInput(key[0]);
+        }
         case GameCommand::OPEN_MENU:
             return handleOptionsMenu(board, hand, player);
         case GameCommand::QUIT:

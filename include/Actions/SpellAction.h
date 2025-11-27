@@ -3,6 +3,7 @@
 
 #include "GameAction.h"
 
+
 class SpellCard;
 class EntityManager;
 class Hand;

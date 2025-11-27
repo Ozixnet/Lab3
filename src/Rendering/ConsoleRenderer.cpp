@@ -3,6 +3,8 @@
 #include "Board/Board.h"
 #include "Entity/EntityManager.h"
 #include "Entity/Player/Player.h"
+#include "Input/GameCommand.h"
+#include "Input/KeyBindings.h"
 #include "Magic/Hand.h"
 #include "Magic/SpellCard.h"
 #include "UI/ConsoleUtils.h"
@@ -11,6 +13,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include <windows.h>
 
@@ -34,7 +37,8 @@ void ConsoleRenderer::renderGameScreen(
 
     std::cout << "\n";
     std::cout << "═══════════════════════════════════════\n";
-    std::cout << "Команды: WASD-движение | O-меню | save-сохранить | load-загрузить | q-выход\n";
+    std::cout << getControlsHelp();
+    std::cout << getConfigInfo();  // Добавляем информацию о конфигурации
     std::cout << "═══════════════════════════════════════\n";
 
     if (board) {
@@ -264,6 +268,59 @@ void ConsoleRenderer::renderBorder(const std::string& content, int width) {
         std::cout << "─";
     }
     std::cout << "┘\n";
+}
+
+std::string ConsoleRenderer::getControlsHelp() const {
+    std::ostringstream oss;
+    oss << "Команды: ";
+    
+    std::cout << "[DEBUG ConsoleRenderer::getControlsHelp] keyBindings = " 
+              << (keyBindings ? "установлен" : "NULL") << "\n";
+    
+    if (keyBindings) {
+        // Получаем клавиши для движения из конфигурации
+        std::string moveUp = keyBindings->getKeyForCommand(GameCommand::MOVE_UP);
+        std::string moveDown = keyBindings->getKeyForCommand(GameCommand::MOVE_DOWN);
+        std::string moveLeft = keyBindings->getKeyForCommand(GameCommand::MOVE_LEFT);
+        std::string moveRight = keyBindings->getKeyForCommand(GameCommand::MOVE_RIGHT);
+        std::string openMenu = keyBindings->getKeyForCommand(GameCommand::OPEN_MENU);
+        std::string quit = keyBindings->getKeyForCommand(GameCommand::QUIT);
+        std::string save = keyBindings->getKeyForCommand(GameCommand::SAVE);
+        std::string load = keyBindings->getKeyForCommand(GameCommand::LOAD);
+        
+        std::cout << "[DEBUG] Клавиши из конфига: UP=" << moveUp << " DOWN=" << moveDown 
+                  << " LEFT=" << moveLeft << " RIGHT=" << moveRight << "\n";
+        
+        // Формируем строку с реальными клавишами
+        oss << moveUp << "/" << moveLeft << "/" << moveDown << "/" << moveRight << "-движение";
+        oss << " | " << openMenu << "-меню";
+        if (save != "?") oss << " | " << save << "-сохранить";
+        if (load != "?") oss << " | " << load << "-загрузить";
+        if (quit != "?") oss << " | " << quit << "-выход";
+    } else {
+        std::cout << "[DEBUG] ✗ KeyBindings не установлен, используем дефолтные подсказки\n";
+        // Fallback на дефолтные значения, если KeyBindings не установлен
+        oss << "WASD-движение | O-меню | save-сохранить | load-загрузить | q-выход";
+    }
+    
+    oss << "\n";
+    return oss.str();
+}
+
+std::string ConsoleRenderer::getConfigInfo() const {
+    std::ostringstream oss;
+    
+    if (keyBindings) {
+        oss << "[Конфигурация загружена] ";
+        oss << "UP=" << keyBindings->getKeyForCommand(GameCommand::MOVE_UP) << " ";
+        oss << "DOWN=" << keyBindings->getKeyForCommand(GameCommand::MOVE_DOWN) << " ";
+        oss << "LEFT=" << keyBindings->getKeyForCommand(GameCommand::MOVE_LEFT) << " ";
+        oss << "RIGHT=" << keyBindings->getKeyForCommand(GameCommand::MOVE_RIGHT) << "\n";
+    } else {
+        oss << "[ВНИМАНИЕ: Конфигурация НЕ загружена! Используются дефолтные настройки]\n";
+    }
+    
+    return oss.str();
 }
 
 

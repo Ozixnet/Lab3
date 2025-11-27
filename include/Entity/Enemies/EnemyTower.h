@@ -3,6 +3,7 @@
 
 #include <memory>
 
+
 class EntityManager;
 class SpellCard;
 
