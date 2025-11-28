@@ -3,28 +3,18 @@
 #include "Input/IInputReader.h"
 #include "Input/KeyBindings.h"
 #include "Input/Direction.h"
+#include <string>
+#include <queue>
+#include <mutex>
 
-class Board;
-class Hand;
-class Player;
-class IGameRenderer;
+class GuiMenuSystem;
 
-/**
- * @brief Реализация IInputReader для консольного ввода
- * 
- * @requirement Требование 1: Реализация класса считывающего ввод пользователя
- * 
- * Использует KeyBindings для маппинга клавиш на команды (требование 5).
- * 
- * @see IInputReader
- * @see KeyBindings
- * @see GameAction
- */
-class ConsoleInputReader : public IInputReader {
+class GuiInputReader : public IInputReader {
 public:
-    ConsoleInputReader();
+    GuiInputReader();
 
     void setRenderer(IGameRenderer* renderer) override;
+    void setMenuSystem(GuiMenuSystem* menu) { menuSystem = menu; }
     GameCommand mapInputToCommand(const std::string& input) const override;
     std::string readRawInput() override;
 
@@ -35,6 +25,10 @@ public:
         Player* player
     ) override;
 
+    // Методы для GUI
+    void pushCommand(const std::string& cmd);
+    bool hasCommand() const;
+
 private:
     std::unique_ptr<GameAction> handleMovementInput(Direction direction);
     std::unique_ptr<GameAction> handleAttackInput(Board* board);
@@ -42,13 +36,11 @@ private:
     std::unique_ptr<GameAction> handleOptionsMenu(Board* board, Hand* hand, Player* player);
     std::unique_ptr<GameAction> handleUpgradeMenu(Player* player, Hand* hand);
 
-    char getDirectionFromUser();
-    int getSpellChoice(Hand* hand);
-
-    void renderOptionsMenuFallback();
-    void renderUpgradeMenuFallback(Player* player, Hand* hand);
-
     KeyBindings keyBindings;
     IGameRenderer* renderer{nullptr};
+    GuiMenuSystem* menuSystem{nullptr};
+    
+    std::queue<std::string> commandQueue;
+    mutable std::mutex queueMutex;
 };
 

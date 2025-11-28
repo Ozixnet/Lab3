@@ -78,6 +78,15 @@ public:
         return currentLevelIndex == getTotalLevels() - 1; 
     }
 
+    /**
+     *  Проверить, является ли индекс уровня валидным
+     * @param index Индекс уровня для проверки
+     * return true если индекс валиден (в диапазоне доступных уровней)
+     */
+    bool isValidLevelIndex(int index) const {
+        return index >= 0 && index < getTotalLevels();
+    }
+
 private:
     std::vector<std::unique_ptr<Level>> levels;  // Все уровни игры
     Level* currentLevel;                          // Текущий активный уровень

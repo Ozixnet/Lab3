@@ -32,6 +32,25 @@ struct has_set_renderer : std::false_type {};
 template<typename T>
 struct has_set_renderer<T, std::void_t<decltype(std::declval<T&>().setRenderer(std::declval<IGameRenderer*>()))>> : std::true_type {};
 
+/**
+ * @brief Шаблонный класс управления игрой
+ * 
+ * @requirement Требование 3: Создать шаблонный класс управления игрой. 
+ * В качестве параметра шаблона должен передаваться класс, отвечающий за считывание и преобразование ввода.
+ * 
+ * @tparam TInputReader Класс ввода (ConsoleInputReader, GuiInputReader, NetworkInputReader и т.д.)
+ * @tparam TRenderer Класс отрисовки (ConsoleRenderer, ImprovedGuiRenderer и т.д.)
+ * 
+ * Создает объект TInputReader и получает от него команды, далее вызывает нужное действие у классов игры.
+ * Данный класс не создает объект класса игры - только управляет игровым процессом.
+ * 
+ * Масштабируемость: можно реализовать получение команд через интернет без использования реализации интерфейса,
+ * и просто подставить новый класс в качестве параметра шаблона.
+ * 
+ * @see IInputReader
+ * @see GameView
+ * @see GameAction
+ */
 template<typename TInputReader, typename TRenderer = ConsoleRenderer>
 class GameController {
 public:
@@ -59,6 +78,11 @@ public:
     void setBoard(std::unique_ptr<Board> b) { board = std::move(b); }
     void setHand(std::unique_ptr<Hand> h) { spellHand = std::move(h); }
     void setCountMove(int moves) { countMove = moves; }
+
+    GameView<TRenderer>& getGameView() { return gameView; }
+    const GameView<TRenderer>& getGameView() const { return gameView; }
+    TInputReader& getInputReader() { return inputReader; }
+    const TInputReader& getInputReader() const { return inputReader; }
 
 private:
     void initGame();
@@ -147,7 +171,8 @@ void GameController<TInputReader, TRenderer>::runGameLoop() {
                 if (Level* level = levelManager.getCurrentLevel()) {
                     EventBus::getInstance().publish(LevelStartedEvent(level->getName(), levelManager.getCurrentLevelIndex()));
                 }
-                std::cin.get();
+                // Ждём любую клавишу через inputReader (не блокирует консоль в GUI режиме)
+                inputReader.readRawInput();
                 loadedFromSave = false;
             } else {
                 loadLevel(levelManager.getCurrentLevelIndex());
@@ -193,21 +218,8 @@ void GameController<TInputReader, TRenderer>::runLevelLoop() {
             if (isGameOver()) {
                 EventBus::getInstance().publish(GameOverEvent(countMove));
                 gameView.onGameOver(countMove);
-                std::cout << "\nНачать заново игру или выйти? (y - начать заново, n - выйти): ";
-                char retry;
-                std::cin >> retry;
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-                if (retry == 'y' || retry == 'Y') {
-                    cleanup();
-                    player = std::make_unique<Player>(1000, 5);
-                    spellHand = std::make_unique<Hand>(5);
-                    levelManager.reset();
-                    if (levelManager.loadLevel(0)) {
-                        continue;
-                    }
-                }
-
+                
+                // Просто выходим в главное меню
                 isRunning = false;
                 quitToMenu = true;
                 break;
@@ -400,8 +412,7 @@ bool GameController<TInputReader, TRenderer>::showMainMenu() {
             return false;
         } catch (const std::exception& e) {
             std::cout << "\n❌ Ошибка загрузки: " << e.what() << "\n";
-            std::cout << "Нажмите Enter для возврата в меню...\n";
-            std::cin.get();
+            // Не блокируем, просто возвращаемся в меню
             return false;
         }
     }
@@ -416,8 +427,8 @@ void GameController<TInputReader, TRenderer>::showLevelStart() {
 
     gameView.onLevelStart(level);
     EventBus::getInstance().publish(LevelStartedEvent(level->getName(), levelManager.getCurrentLevelIndex()));
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get();
+    // Ждём клавишу через inputReader
+    inputReader.readRawInput();
 }
 
 template<typename TInputReader, typename TRenderer>
@@ -427,15 +438,15 @@ void GameController<TInputReader, TRenderer>::showLevelComplete() {
     if (level) {
         EventBus::getInstance().publish(LevelCompletedEvent(level->getName(), levelManager.getCurrentLevelIndex(), countMove, player ? player->GetHealth() : 0));
     }
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get();
+    // Ждём клавишу через inputReader
+    inputReader.readRawInput();
 }
 
 template<typename TInputReader, typename TRenderer>
 void GameController<TInputReader, TRenderer>::showGameComplete() {
     gameView.onGameComplete(player ? player->GetHealth() : 0);
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get();
+    // Ждём клавишу через inputReader
+    inputReader.readRawInput();
 }
 
 template<typename TInputReader, typename TRenderer>
@@ -448,14 +459,10 @@ void GameController<TInputReader, TRenderer>::handleSaveGame() {
     try {
         GameSaveManager::saveGame(*this);
         std::cout << "\n✅ Игра успешно сохранена!\n";
-        std::cout << "Нажмите Enter для продолжения...\n";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cin.get();
+        // Не блокируем, просто продолжаем
     } catch (const std::exception& e) {
         std::cout << "\n❌ Ошибка сохранения: " << e.what() << "\n";
-        std::cout << "Нажмите Enter для продолжения...\n";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cin.get();
+        // Не блокируем, просто продолжаем
     }
 }
 
@@ -467,14 +474,10 @@ void GameController<TInputReader, TRenderer>::handleLoadGame(bool resumeFromMenu
             loadedFromSave = true;
         }
         std::cout << "\n✅ Игра успешно загружена!\n";
-        std::cout << "Нажмите Enter для продолжения...\n";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cin.get();
+        // Не блокируем, просто продолжаем
     } catch (const std::exception& e) {
         std::cout << "\n❌ Ошибка загрузки: " << e.what() << "\n";
-        std::cout << "Нажмите Enter для продолжения...\n";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cin.get();
+        // Не блокируем, просто продолжаем
     }
 }
 
@@ -486,6 +489,11 @@ void GameController<TInputReader, TRenderer>::prepareForNextLevel() {
 
     player->RestoreHealth();
     std::cout << "\n✨ HP восстановлено до максимума!\n";
+    
+    // 🎯 Бонусные очки за прохождение уровня!
+    int bonusPoints = 2;
+    player->AddUpgradePoints(bonusPoints);
+    std::cout << "⭐ +" << bonusPoints << " очков прокачки за прохождение уровня!\n";
 
     if (spellHand->size() > 2) {
         while (spellHand->size() > 2) {

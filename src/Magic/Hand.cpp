@@ -30,6 +30,15 @@ bool Hand::addSpell(std::unique_ptr<SpellCard> spell) {
     return false;
 }
 
+// Добавить заклинание по имени (для загрузки сохранений)
+bool Hand::addSpellByName(const std::string& spellName) {
+    auto spell = SpellFactory::createSpell(spellName);
+    if (spell) {
+        return addSpell(std::move(spell));
+    }
+    return false;
+}
+
 // Добавить случайное заклинание из доступного списка
 void Hand::addRandomSpell() {
     auto spell = SpellFactory::createRandomSpell();

@@ -1,9 +1,21 @@
 #ifndef GAME_ACTION_H
 #define GAME_ACTION_H
 
+
 class Board;
 class Player;
 
+/**
+ * @brief Базовый класс для всех игровых действий
+ * 
+ * Используется в системе ввода (требование 1).
+ * IInputReader::parseCommand() создаёт объекты GameAction.
+ * 
+ * @see IInputReader
+ * @see MoveAction
+ * @see AttackAction
+ * @see SpellAction
+ */
 class GameAction {
 public:
     virtual ~GameAction() = default;

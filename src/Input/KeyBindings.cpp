@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -49,13 +50,18 @@ void KeyBindings::setDefaults() {
 }
 
 bool KeyBindings::loadFromFile(const std::string& filename) {
+    std::cout << "[DEBUG KeyBindings] Попытка загрузить из: " << filename << "\n";
+    std::cout << "[DEBUG] Текущая рабочая директория: " << std::filesystem::current_path().string() << "\n";
+    
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "⚠️ Файл конфигурации '" << filename
+        std::cerr << "[DEBUG] ✗ Файл конфигурации '" << filename
                   << "' не найден. Используются дефолтные настройки.\n";
         setDefaults();
         return false;
     }
+    
+    std::cout << "[DEBUG] ✓ Файл открыт успешно\n";
 
     std::map<std::string, GameCommand> tempKeyToCommand;
     std::unordered_map<GameCommand, std::string> tempCommandToKey;
@@ -89,9 +95,11 @@ bool KeyBindings::loadFromFile(const std::string& filename) {
 
         tempKeyToCommand[lowerKey] = cmd;
         tempCommandToKey[cmd] = lowerKey;
+        std::cout << "[DEBUG] Загружено: " << commandToString(cmd) << " = '" << lowerKey << "'\n";
     }
 
     file.close();
+    std::cout << "[DEBUG] Загружено всего привязок: " << tempKeyToCommand.size() << "\n";
 
     if (hasError) {
         std::cerr << "⚠️ Обнаружены ошибки в конфигурации. Используются дефолтные настройки.\n";
@@ -111,7 +119,10 @@ bool KeyBindings::loadFromFile(const std::string& filename) {
         return false;
     }
 
+    std::cout << "\n";
+    std::cout << "═══════════════════════════════════════\n";
     std::cout << "✅ Настройки управления загружены из '" << filename << "'\n";
+    std::cout << "═══════════════════════════════════════\n";
     return true;
 }
 
@@ -224,10 +235,23 @@ bool KeyBindings::hasAllRequiredCommands() const {
 
 GameCommand KeyBindings::getCommand(const std::string& input) const {
     std::string lowerInput = toLower(input);
+    std::cout << "[DEBUG KeyBindings::getCommand] Поиск команды для ввода: '" << input 
+              << "' (lowercase: '" << lowerInput << "')\n";
+    std::cout << "[DEBUG] Всего привязок в keyToCommand: " << keyToCommand.size() << "\n";
+    
     auto it = keyToCommand.find(lowerInput);
     if (it != keyToCommand.end()) {
+        std::cout << "[DEBUG] ✓ Команда найдена: " << static_cast<int>(it->second) << "\n";
         return it->second;
     }
+    
+    std::cout << "[DEBUG] ✗ Команда НЕ найдена для '" << lowerInput << "'\n";
+    std::cout << "[DEBUG] Доступные клавиши: ";
+    for (const auto& [key, cmd] : keyToCommand) {
+        std::cout << "'" << key << "' ";
+    }
+    std::cout << "\n";
+    
     return GameCommand::NONE;
 }
 

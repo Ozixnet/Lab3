@@ -5,7 +5,7 @@
 #include "Events/GameEvent.h"
 #include <iostream>
 
-MoveAction::MoveAction(char dir)
+MoveAction::MoveAction(Direction dir)
     : direction(dir) {}
 
 int MoveAction::execute(Board& board, Player& player) {

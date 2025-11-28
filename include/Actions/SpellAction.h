@@ -3,10 +3,21 @@
 
 #include "GameAction.h"
 
+
 class SpellCard;
 class EntityManager;
 class Hand;
 
+/**
+ * @brief Действие применения заклинания
+ * 
+ * Создаётся через IInputReader::parseCommand() (требование 1).
+ * Публикует SpellCastEvent в EventBus для логирования (требование 6).
+ * 
+ * @see GameAction
+ * @see IInputReader
+ * @see EventBus
+ */
 class SpellAction : public GameAction {
 private:
     SpellCard* spell;

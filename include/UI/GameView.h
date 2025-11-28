@@ -5,11 +5,29 @@
 
 #include "Rendering/IGameRenderer.h"
 
+
 class Board;
 class Player;
 class Hand;
 class Level;
 
+/**
+ * @brief Шаблонный класс визуализации игры
+ * 
+ * @requirement Требование 4: Создать шаблонный класс визуализации игры.
+ * В качестве параметра шаблона должен передаваться класс, отвечающий за способ отрисовки игры.
+ * 
+ * @tparam TRenderer Класс отрисовки (ConsoleRenderer, ImprovedGuiRenderer, WebRenderer и т.д.)
+ * 
+ * Данный класс создает объект класса отрисовки игры, и реагирует на изменения в игре,
+ * и вызывает команду отрисовку.
+ * 
+ * Масштабируемость: можно реализовать отрисовку в виде веб-страницы без использования реализации интерфейса,
+ * и просто подставить новый класс в качестве параметра шаблона.
+ * 
+ * @see IGameRenderer
+ * @see GameController
+ */
 template<typename TRenderer>
 class GameView {
 public:

@@ -7,7 +7,16 @@
 #include <vector>
 
 /**
- * Класс для управления привязками клавиш к командам.
+ * @brief Класс для управления привязками клавиш к командам
+ * 
+ * @requirement Требование 5: Добавить возможность настраивать управление игрой через файл
+ * 
+ * Загружает конфигурацию из файла keybindings.cfg.
+ * Если команды некорректные (отсутствует информация, дубликаты клавиш/команд),
+ * то управление устанавливается по умолчанию.
+ * 
+ * @see ConsoleInputReader
+ * @see GameCommand
  */
 class KeyBindings {
 public:
@@ -32,6 +41,10 @@ private:
     std::map<std::string, GameCommand> keyToCommand;
     std::unordered_map<GameCommand, std::string> commandToKey;
 };
+
+
+
+
 
 
 

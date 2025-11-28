@@ -26,14 +26,18 @@ file(GLOB_RECURSE SOURCES
 )
 
 # === СОЗДАТЬ ИСПОЛНЯЕМЫЙ ФАЙЛ ===
-add_executable(untitled main.cpp ${SOURCES}
+add_executable(game main.cpp ${SOURCES}
         src/Entity/Enemies/EnemyTower.cpp
         include/Entity/Enemies/EnemyTower.h
         src/Magic/Spells/TrapSpell.cpp
         include/Magic/Spells/TrapSpell.h
         src/Magic/TrapRegistry.cpp
         src/Input/ConsoleInputReader.cpp
+        src/Input/GuiInputReader.cpp
         src/Rendering/ConsoleRenderer.cpp
+        src/Rendering/ImprovedGuiRenderer.cpp
+        src/Rendering/GuiRenderer.cpp
+        src/UI/GuiMenuSystem.cpp
         # Новые файлы
         src/Entity/Allies/Ally.cpp
         src/Magic/SpellBuffContext.cpp
@@ -43,8 +47,10 @@ add_executable(untitled main.cpp ${SOURCES}
         src/Board/Grid.cpp
         src/Magic/Spells/SummonSpell.cpp
         src/Magic/GameSpellContext.cpp
+        src/Magic/GuiSpellContext.cpp
         include/Magic/ISpellContext.h
         include/Magic/GameSpellContext.h
+        include/Magic/GuiSpellContext.h
         include/Magic/MockSpellContext.h
         
         # Система уровней (ver.3.11)
@@ -61,12 +67,16 @@ add_executable(untitled main.cpp ${SOURCES}
         include/core/Levels/Level3_BuildingAssault.h
         include/core/Levels/Level4_FinalBattle.h
         src/Events/EventBus.cpp
+        src/Logging/GameLogger.cpp
 )
 
+# Копируем папку config в папку сборки, чтобы игра находила keybindings.cfg
+file(COPY ${CMAKE_SOURCE_DIR}/config DESTINATION ${CMAKE_BINARY_DIR})
+
 if(MSVC)
-    target_compile_options(untitled PRIVATE /W4)
+    target_compile_options(game PRIVATE /W4)
 else()
-    target_compile_options(untitled PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(game PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 

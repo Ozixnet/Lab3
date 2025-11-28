@@ -11,6 +11,20 @@ class Hand;
 class Player;
 class IGameRenderer;
 
+/**
+ * @brief Интерфейс для считывания и преобразования ввода пользователя в объект команды
+ * 
+ * @requirement Требование 1: Создать класс считывающий ввод пользователя и преобразующий ввод пользователь в объект команды
+ * 
+ * Реализации:
+ * - ConsoleInputReader - консольный ввод
+ * - GuiInputReader - GUI ввод
+ * 
+ * @see ConsoleInputReader
+ * @see GuiInputReader
+ * @see GameAction
+ * @see GameCommand
+ */
 class IInputReader {
 public:
     virtual ~IInputReader() = default;

@@ -1,14 +1,18 @@
 #ifdef _WIN32
 
 #include "Input/ConsoleInputReader.h"
+#include "Input/GuiInputReader.h"
 #include "Logging/GameLogger.h"
 #include "Rendering/ConsoleRenderer.h"
+#include "Rendering/ImprovedGuiRenderer.h"
 #include "core/GameController.h"
 
+#include <iostream>
 #include <string>
 
 int main(int argc, char* argv[]) {
     LogMode logMode = LogMode::FILE;
+    bool useGuiRenderer = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -18,6 +22,8 @@ int main(int argc, char* argv[]) {
             logMode = LogMode::FILE;
         } else if (arg == "--log-both") {
             logMode = LogMode::BOTH;
+        } else if (arg == "--gui" || arg == "--renderer=gui") {
+            useGuiRenderer = true;
         }
     }
 
@@ -36,8 +42,18 @@ int main(int argc, char* argv[]) {
             break;
     }
 
+    if (useGuiRenderer) {
+        std::cout << "Запуск в GUI режиме (графический интерфейс)...\n";
+        GameController<GuiInputReader, ImprovedGuiRenderer> game;
+        // Связываем GUI input reader с GUI renderer и menu system
+        game.getGameView().getRenderer().setInputReader(&game.getInputReader());
+        game.getInputReader().setMenuSystem(game.getGameView().getRenderer().getMenuSystem());
+        game.gameStart();
+    } else {
+        std::cout << "Запуск в консольном режиме...\n";
     GameController<ConsoleInputReader, ConsoleRenderer> game;
     game.gameStart();
+    }
     return 0;
 }
 #endif
