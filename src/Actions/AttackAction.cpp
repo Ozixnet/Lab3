@@ -19,6 +19,7 @@ int AttackAction::execute(Board& board, Player& player) {
                              attackInfo.damage));
 
         if (attackInfo.targetDestroyed) {
+            // Очки прокачки выдаются в EntityManager::handleAttackAt()
             EventBus::getInstance().publish(
                 EntityDiedEvent(attackInfo.targetName.empty() ? "Цель" : attackInfo.targetName,
                                 attackInfo.targetX,

@@ -67,7 +67,11 @@ add_executable(game main.cpp ${SOURCES}
         include/core/Levels/Level3_BuildingAssault.h
         include/core/Levels/Level4_FinalBattle.h
         src/Events/EventBus.cpp
+        src/Logging/GameLogger.cpp
 )
+
+# Копируем папку config в папку сборки, чтобы игра находила keybindings.cfg
+file(COPY ${CMAKE_SOURCE_DIR}/config DESTINATION ${CMAKE_BINARY_DIR})
 
 if(MSVC)
     target_compile_options(game PRIVATE /W4)

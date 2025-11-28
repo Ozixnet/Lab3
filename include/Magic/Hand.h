@@ -4,6 +4,7 @@
 #include "SpellCard.h"
 #include <vector>
 #include <memory>
+#include <string>
 
 class Hand {
 public:
@@ -11,6 +12,9 @@ public:
 
     // Добавить заклинание
     bool addSpell(std::unique_ptr<SpellCard> spell);
+    
+    // Добавить заклинание по имени (для загрузки сохранений)
+    bool addSpellByName(const std::string& spellName);
 
     // Добавить случайное заклинание
     void addRandomSpell();

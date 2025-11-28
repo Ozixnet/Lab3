@@ -11,6 +11,7 @@
 #include "Player/Player.h"
 #include "Magic/Spells/TrapSpell.h"
 #include "Magic/SpellBuffContext.h"
+#include "Input/Direction.h"
 
 
 class Board;  // Forward declaration
@@ -39,8 +40,8 @@ public:
 
 
     // === МЕТОДЫ ДЛЯ ИГРОКА ===
-    int playerMove(char key);
-    int playerAttack(char key);
+    int playerMove(Direction dir);
+    int playerAttack(char key);  // TODO: заменить на Direction в будущем
     void playerPosted();
     void playerReduceHealth(int amount);
     int playerGetHealth() const;

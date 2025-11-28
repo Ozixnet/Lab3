@@ -7,6 +7,19 @@ class Player;
 class Hand;
 class Level;
 
+/**
+ * @brief Интерфейс для отрисовки игры
+ * 
+ * @requirement Требование 2: Создать класс отрисовки игры. Данный класс определяет то, как должно отображаться игра.
+ * 
+ * Реализации:
+ * - ConsoleRenderer - консольная отрисовка
+ * - ImprovedGuiRenderer - GUI отрисовка
+ * 
+ * @see ConsoleRenderer
+ * @see ImprovedGuiRenderer
+ * @see GameView
+ */
 class IGameRenderer {
 public:
     virtual ~IGameRenderer() = default;

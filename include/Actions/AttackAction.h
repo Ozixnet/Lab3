@@ -3,6 +3,16 @@
 
 #include "GameAction.h"
 
+/**
+ * @brief Действие атаки игрока
+ * 
+ * Создаётся через IInputReader::parseCommand() (требование 1).
+ * Публикует DamageDealtEvent и EntityDiedEvent в EventBus для логирования (требование 6).
+ * 
+ * @see GameAction
+ * @see IInputReader
+ * @see EventBus
+ */
 class AttackAction : public GameAction {
 private:
     char direction;

@@ -32,6 +32,25 @@ struct has_set_renderer : std::false_type {};
 template<typename T>
 struct has_set_renderer<T, std::void_t<decltype(std::declval<T&>().setRenderer(std::declval<IGameRenderer*>()))>> : std::true_type {};
 
+/**
+ * @brief Шаблонный класс управления игрой
+ * 
+ * @requirement Требование 3: Создать шаблонный класс управления игрой. 
+ * В качестве параметра шаблона должен передаваться класс, отвечающий за считывание и преобразование ввода.
+ * 
+ * @tparam TInputReader Класс ввода (ConsoleInputReader, GuiInputReader, NetworkInputReader и т.д.)
+ * @tparam TRenderer Класс отрисовки (ConsoleRenderer, ImprovedGuiRenderer и т.д.)
+ * 
+ * Создает объект TInputReader и получает от него команды, далее вызывает нужное действие у классов игры.
+ * Данный класс не создает объект класса игры - только управляет игровым процессом.
+ * 
+ * Масштабируемость: можно реализовать получение команд через интернет без использования реализации интерфейса,
+ * и просто подставить новый класс в качестве параметра шаблона.
+ * 
+ * @see IInputReader
+ * @see GameView
+ * @see GameAction
+ */
 template<typename TInputReader, typename TRenderer = ConsoleRenderer>
 class GameController {
 public:
@@ -470,6 +489,11 @@ void GameController<TInputReader, TRenderer>::prepareForNextLevel() {
 
     player->RestoreHealth();
     std::cout << "\n✨ HP восстановлено до максимума!\n";
+    
+    // 🎯 Бонусные очки за прохождение уровня!
+    int bonusPoints = 2;
+    player->AddUpgradePoints(bonusPoints);
+    std::cout << "⭐ +" << bonusPoints << " очков прокачки за прохождение уровня!\n";
 
     if (spellHand->size() > 2) {
         while (spellHand->size() > 2) {

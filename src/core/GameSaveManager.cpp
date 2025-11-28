@@ -336,3 +336,142 @@ void GameSaveManager::loadHand(std::ifstream& file, Hand& hand) {
     }
 }
 
+// === БЕЗОПАСНАЯ ЗАГРУЗКА: Чтение всех данных во временную структуру ===
+SaveData GameSaveManager::readAllData(std::ifstream& file) {
+    SaveData data;
+    
+    // Читаем основные данные
+    readBinary(file, data.countMove);
+    readBinary(file, data.levelIndex);
+    
+    // Читаем данные игрока
+    readBinary(file, data.playerHealth);
+    readBinary(file, data.playerMaxHealth);
+    readBinary(file, data.playerDamage);
+    
+    int distance;
+    readBinary(file, distance);
+    data.playerIsRanged = (distance > 1);
+    
+    readBinary(file, data.playerIsSlowed);
+    
+    bool doubleDistance;
+    readBinary(file, doubleDistance);
+    
+    int upgradePoints;
+    readBinary(file, upgradePoints);
+    
+    // Читаем размер доски
+    readBinary(file, data.boardSize);
+    
+    // Читаем координаты игрока
+    readBinary(file, data.playerCoord.first);
+    readBinary(file, data.playerCoord.second);
+    
+    // Читаем врагов
+    size_t enemyCount;
+    readBinary(file, enemyCount);
+    if (enemyCount > 1000) {
+        throw InvalidDataException("Too many enemies in save file", "readAllData");
+    }
+    for (size_t i = 0; i < enemyCount; ++i) {
+        SaveData::EnemyData e;
+        readBinary(file, e.x);
+        readBinary(file, e.y);
+        readBinary(file, e.health);
+        readBinary(file, e.damage);
+        e.isActive = true;
+        e.id = static_cast<int>(i);
+        data.enemies.push_back(e);
+    }
+    
+    // Читаем союзников
+    size_t allyCount;
+    readBinary(file, allyCount);
+    if (allyCount > 1000) {
+        throw InvalidDataException("Too many allies in save file", "readAllData");
+    }
+    for (size_t i = 0; i < allyCount; ++i) {
+        SaveData::AllyData a;
+        readBinary(file, a.x);
+        readBinary(file, a.y);
+        readBinary(file, a.health);
+        readBinary(file, a.damage);
+        a.isActive = true;
+        a.id = static_cast<int>(i);
+        data.allies.push_back(a);
+    }
+    
+    // Читаем башни
+    size_t towerCount;
+    readBinary(file, towerCount);
+    if (towerCount > 100) {
+        throw InvalidDataException("Too many towers in save file", "readAllData");
+    }
+    for (size_t i = 0; i < towerCount; ++i) {
+        SaveData::TowerData t;
+        readBinary(file, t.x);
+        readBinary(file, t.y);
+        readBinary(file, t.health);
+        int cooldown;
+        readBinary(file, cooldown);  // Читаем но не сохраняем
+        t.isActive = true;
+        t.id = static_cast<int>(i);
+        data.towers.push_back(t);
+    }
+    
+    // Читаем здания
+    size_t buildingCount;
+    readBinary(file, buildingCount);
+    if (buildingCount > 100) {
+        throw InvalidDataException("Too many buildings in save file", "readAllData");
+    }
+    for (size_t i = 0; i < buildingCount; ++i) {
+        SaveData::BuildingData b;
+        readBinary(file, b.x);
+        readBinary(file, b.y);
+        int health;
+        readBinary(file, health);  // Читаем health
+        readBinary(file, b.spawnInterval);
+        readBinary(file, b.spawnTimer);
+        b.isActive = true;
+        b.id = static_cast<int>(i);
+        data.buildings.push_back(b);
+    }
+    
+    // Читаем ловушки игрока
+    size_t trapCount;
+    readBinary(file, trapCount);
+    if (trapCount > 1000) {
+        throw InvalidDataException("Too many traps in save file", "readAllData");
+    }
+    for (size_t i = 0; i < trapCount; ++i) {
+        int x, y;
+        readBinary(file, x);
+        readBinary(file, y);
+        data.playerTraps.push_back({x, y});
+    }
+    
+    // Читаем заклинания
+    size_t handSize;
+    readBinary(file, handSize);
+    if (handSize > 10) {
+        throw InvalidDataException("Hand size too large in save file", "readAllData");
+    }
+    for (size_t i = 0; i < handSize; ++i) {
+        size_t nameLen;
+        readBinary(file, nameLen);
+        if (nameLen > 100) {
+            throw InvalidDataException("Spell name too long in save file", "readAllData");
+        }
+        std::string spellName(nameLen, '\0');
+        file.read(&spellName[0], nameLen);
+        if (!file.good()) {
+            throw LoadException("Failed to read spell name", "readAllData");
+        }
+        data.spellNames.push_back(spellName);
+    }
+    
+    return data;
+}
+

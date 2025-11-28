@@ -4,16 +4,28 @@
 #include <string>
 
 enum class EventType {
-    PLAYER_MOVED,
-    DAMAGE_DEALT,
-    ENTITY_DIED,
-    SPELL_CAST,
-    ITEM_PICKED_UP,
-    LEVEL_STARTED,
-    LEVEL_COMPLETED,
-    GAME_OVER
+    PLAYER_MOVED,      ///< Игрок переместился
+    DAMAGE_DEALT,      ///< Нанесён урон
+    ENTITY_DIED,       ///< Сущность умерла
+    SPELL_CAST,        ///< Заклинание применено
+    ITEM_PICKED_UP,    ///< Предмет подобран
+    LEVEL_STARTED,    ///< Уровень начался
+    LEVEL_COMPLETED,   ///< Уровень пройден
+    GAME_OVER          ///< Игра окончена
 };
 
+/**
+ * @brief Базовый класс для всех игровых событий
+ * 
+ * Используется в системе логирования (требование 6).
+ * Игровые сущности публикуют события через EventBus.
+ * 
+ * @see EventBus
+ * @see GameLogger
+ * @see PlayerMovedEvent
+ * @see DamageDealtEvent
+ * @see SpellCastEvent
+ */
 class GameEvent {
 public:
     explicit GameEvent(EventType type);
@@ -29,6 +41,15 @@ private:
     std::chrono::system_clock::time_point timestamp;
 };
 
+/**
+ * @brief Событие движения игрока
+ * 
+ * Публикуется MoveAction в EventBus для логирования (требование 6).
+ * 
+ * @see GameEvent
+ * @see MoveAction
+ * @see EventBus
+ */
 class PlayerMovedEvent : public GameEvent {
 public:
     PlayerMovedEvent(int fromX, int fromY, int toX, int toY);
@@ -41,6 +62,15 @@ private:
     int toY;
 };
 
+/**
+ * @brief Событие нанесения урона
+ * 
+ * Публикуется AttackAction в EventBus для логирования (требование 6).
+ * 
+ * @see GameEvent
+ * @see AttackAction
+ * @see EventBus
+ */
 class DamageDealtEvent : public GameEvent {
 public:
     DamageDealtEvent(const std::string& attacker,
@@ -65,6 +95,15 @@ private:
     int y;
 };
 
+/**
+ * @brief Событие применения заклинания
+ * 
+ * Публикуется SpellAction в EventBus для логирования (требование 6).
+ * 
+ * @see GameEvent
+ * @see SpellAction
+ * @see EventBus
+ */
 class SpellCastEvent : public GameEvent {
 public:
     SpellCastEvent(const std::string& spellName, int x, int y);

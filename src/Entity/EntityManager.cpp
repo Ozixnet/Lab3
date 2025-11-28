@@ -157,6 +157,9 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
 
             if (!enemies[enemyIndex].IsAlive()) {
                 std::cout << "💀 Враг #" << enemies[enemyIndex].GetID() << " повержен!" << std::endl;
+                // 🎯 Выдаём очко прокачки за убийство врага
+                player->AddUpgradePoints(1);
+                std::cout << "⭐ +1 очко прокачки!\n";
                 removeEnemy(enemyIndex);
                 return 1; // Убит враг
             }
@@ -185,6 +188,9 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
 
             if (buildings[buildingIndex].getHealth() <= 0) {
                 std::cout << "💥 Здание #" << buildings[buildingIndex].getID() << " разрушено!" << std::endl;
+                // 🎯 Выдаём 2 очка прокачки за уничтожение здания
+                player->AddUpgradePoints(2);
+                std::cout << "⭐ +2 очка прокачки!\n";
                 removeBuilding(buildingIndex);  // <-- УДАЛЯЕМ вместо setActive(false)
                 return 2; // Уничтожено здание
             }
@@ -245,6 +251,9 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
 
         if (!towers[towerIndex].isAlive() || towers[towerIndex].getHealth() <= 0) {
             std::cout << "💥 Башня #" << towers[towerIndex].getId() << " разрушена!" << std::endl;
+            // 🎯 Выдаём 3 очка прокачки за уничтожение башни
+            player->AddUpgradePoints(3);
+            std::cout << "⭐ +3 очка прокачки!\n";
             removeEnemyTower(towerIndex); // аналог removeBuilding
             return 3; // Код для уничтоженной башни
         }
@@ -259,7 +268,11 @@ int EntityManager::handleAttackAt(int x, int y, int damage) {
 // МЕТОДЫ ДЛЯ ИГРОКА
 // ========================================
 
-int EntityManager::playerMove(char key) {
+int EntityManager::playerMove(Direction dir) {
+    if (dir == Direction::NONE) {
+        return -1;
+    }
+    
     if (player->IsSlowed()) {
         std::cout << "Вы ЗАМЕДЛЕНЫ! Пропуск хода..." << std::endl;
         player->SetSlowed(false);
@@ -269,16 +282,10 @@ int EntityManager::playerMove(char key) {
     }
 
     auto [startX, startY] = plCoord;
-    int newX = startX;
-    int newY = startY;
-
-    switch (key) {
-        case 'w': case 'W': newY--; break;
-        case 's': case 'S': newY++; break;
-        case 'a': case 'A': newX--; break;
-        case 'd': case 'D': newX++; break;
-        default: return -1;
-    }
+    int dx = 0, dy = 0;
+    directionToOffset(dir, dx, dy);
+    int newX = startX + dx;
+    int newY = startY + dy;
 
     if (newX <= 0 || newX >= gridSize - 1 || newY <= 0 || newY >= gridSize - 1) {
         return -1;

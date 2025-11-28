@@ -11,6 +11,18 @@ class Hand;
 class Level;
 class KeyBindings;
 
+/**
+ * @brief Реализация IGameRenderer для консольной отрисовки
+ * 
+ * @requirement Требование 2: Реализация класса отрисовки игры
+ * 
+ * Используется в GameView<ConsoleRenderer> (требование 4).
+ * Использует KeyBindings для отображения подсказок управления (требование 5).
+ * 
+ * @see IGameRenderer
+ * @see GameView
+ * @see KeyBindings
+ */
 class ConsoleRenderer : public IGameRenderer {
 public:
     void renderGameScreen(

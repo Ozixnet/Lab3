@@ -21,7 +21,7 @@ private:
     static int nextTowerId;
 
 public:
-    EnemyTower(int x, int y, int health = 2, int radius = 1, int damage = 1, int cd = 2);
+    EnemyTower(int x, int y, int health = 2, int radius = 1, int damage = 1, int cd = 20);
     
     // Конструкторы копирования и перемещения
     EnemyTower(const EnemyTower& other);

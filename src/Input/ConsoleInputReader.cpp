@@ -1,4 +1,5 @@
 #include "Input/ConsoleInputReader.h"
+#include "Input/Direction.h"
 
 #include "Actions/AttackAction.h"
 #include "Actions/MoveAction.h"
@@ -22,12 +23,12 @@
 ConsoleInputReader::ConsoleInputReader() {
     std::cout << "\n[DEBUG ConsoleInputReader] Инициализация...\n";
 
-    // Пробуем загрузить конфигурацию из разных возможных путей
     std::vector<std::string> possiblePaths = {
         "config/keybindings.cfg",           // Относительно текущей директории
         "../config/keybindings.cfg",        // Если запускаем из cmake-build-debug
         "../../config/keybindings.cfg",     // Если запускаем из подпапки
-        "keybindings.cfg"                   // Прямо в текущей директории
+        "keybindings.cfg",                   // Прямо в текущей директории
+        "C:/Users/Arkana/CLionProjects/untitled2/config/keybindings.cfg"
     };
 
     bool loaded = false;
@@ -112,38 +113,16 @@ std::unique_ptr<GameAction> ConsoleInputReader::parseCommand(
     std::cout << "[DEBUG parseCommand] Команда из KeyBindings: " << static_cast<int>(cmd) << "\n";
 
     switch (cmd) {
-        case GameCommand::MOVE_UP: {
-            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_UP);
-            if (key.empty() || key == "?") {
-                std::cerr << "Ошибка: клавиша не настроена для MOVE_UP!\n";
-                return nullptr;
-            }
-            return handleMovementInput(key[0]);
-        }
-        case GameCommand::MOVE_DOWN: {
-            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_DOWN);
-            if (key.empty() || key == "?") {
-                std::cerr << "Ошибка: клавиша не настроена для MOVE_DOWN!\n";
-                return nullptr;
-            }
-            return handleMovementInput(key[0]);
-        }
-        case GameCommand::MOVE_LEFT: {
-            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_LEFT);
-            if (key.empty() || key == "?") {
-                std::cerr << "Ошибка: клавиша не настроена для MOVE_LEFT!\n";
-                return nullptr;
-            }
-            return handleMovementInput(key[0]);
-        }
-        case GameCommand::MOVE_RIGHT: {
-            std::string key = keyBindings.getKeyForCommand(GameCommand::MOVE_RIGHT);
-            if (key.empty() || key == "?") {
-                std::cerr << "Ошибка: клавиша не настроена для MOVE_RIGHT!\n";
-                return nullptr;
-            }
-            return handleMovementInput(key[0]);
-        }
+
+        // KeyBindings определил команду — передаём Direction (абстракция вместо символов)
+        case GameCommand::MOVE_UP:
+            return handleMovementInput(Direction::UP);
+        case GameCommand::MOVE_DOWN:
+            return handleMovementInput(Direction::DOWN);
+        case GameCommand::MOVE_LEFT:
+            return handleMovementInput(Direction::LEFT);
+        case GameCommand::MOVE_RIGHT:
+            return handleMovementInput(Direction::RIGHT);
         case GameCommand::OPEN_MENU:
             return handleOptionsMenu(board, hand, player);
         case GameCommand::QUIT:
@@ -159,7 +138,7 @@ std::unique_ptr<GameAction> ConsoleInputReader::parseCommand(
     return nullptr;
 }
 
-std::unique_ptr<GameAction> ConsoleInputReader::handleMovementInput(char direction) {
+std::unique_ptr<GameAction> ConsoleInputReader::handleMovementInput(Direction direction) {
     return std::make_unique<MoveAction>(direction);
 }
 
